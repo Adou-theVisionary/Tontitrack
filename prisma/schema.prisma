@@ -1,0 +1,618 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StatutUtilisateur {
+  ACTIF
+  INACTIF
+  SUSPENDU
+  SUPPRIME
+}
+
+enum TypeEspace {
+  PERSONNEL
+  ACTIVITE
+}
+
+enum StatutEspaceFinancier {
+  ACTIF
+  DESACTIVE
+  ARCHIVE
+}
+
+enum TypeTransaction {
+  TOUS
+  REVENU
+  DEPENSE
+  EPARGNE
+  INVESTISSEMENT
+}
+
+enum StatutTransaction {
+  ACTIVE
+  ANNULEE
+}
+
+enum ModeTontine {
+  FIXE_CREATEUR
+  TOURNANT_EXCLU
+  TOURNANT_INCLUS
+}
+
+enum StatutTontine {
+  EN_PREPARATION
+  PRETE_A_DEMARRER
+  ACTIVE
+  TERMINEE
+  ANNULEE
+  ARCHIVEE
+}
+
+enum FrequenceTontine {
+  QUOTIDIENNE
+  HEBDOMADAIRE
+  MENSUELLE
+}
+
+enum RoleMembreTontine {
+  CREATEUR
+  MEMBRE
+}
+
+enum StatutMembre {
+  EN_ATTENTE
+  APPROUVE
+  REFUSE
+  RETIRE
+  TERMINE
+}
+
+enum VisibiliteTontine {
+  PUBLIQUE
+  PRIVEE
+}
+
+enum ModeDemarrageTontine {
+  MANUEL
+  AUTOMATIQUE
+}
+
+enum StrategieAdhesion {
+  INVITATION
+  DEMANDE
+  INVITATION_ET_DEMANDE
+}
+
+enum MethodeOrdreBeneficiaires {
+  MANUEL
+  ALEATOIRE
+}
+
+enum StatutInvitationTontine {
+  EN_ATTENTE
+  ACCEPTEE
+  REFUSEE
+  REVOQUEE
+  EXPIREE
+}
+
+enum StatutDemandeAdhesion {
+  EN_ATTENTE
+  APPROUVEE
+  REFUSEE
+  ANNULEE
+}
+
+enum StatutRotation {
+  A_VENIR
+  EN_COURS
+  EN_ATTENTE_VERSEMENT
+  EN_ATTENTE_CONFIRMATION
+  TERMINEE
+  EN_RETARD
+  LITIGE
+  ANNULEE
+}
+
+enum StatutCotisation {
+  A_PAYER
+  PARTIEL
+  PAYEE
+  EN_RETARD
+  NON_CONCERNE
+}
+
+enum StatutDeclaration {
+  EN_ATTENTE_VALIDATION
+  VALIDEE
+  REJETEE
+  ANNULEE
+}
+
+enum StatutVersement {
+  DECLARE
+  CONFIRME
+  CONTESTE
+}
+
+enum StatutConfirmationReception {
+  EN_ATTENTE
+  CONFIRMEE
+  NON_RECUE
+  CONFIRMEE_AUTOMATIQUEMENT
+}
+
+enum TypeNotification {
+  INVITATION
+  DEMANDE_ADHESION
+  DEMANDE_ACCEPTEE
+  DEMANDE_REFUSEE
+  COTISATION_A_PAYER
+  COTISATION_EN_RETARD
+  COTISATION_VALIDEE
+  COTISATION_REJETEE
+  NOUVELLE_ROTATION
+  VERSEMENT_DECLARE
+  CONFIRMATION_RECEPTION
+  TONTINE_DEMARREE
+  TONTINE_TERMINEE
+}
+
+enum SourceEvenementAudit {
+  WEB
+  MOBILE
+  OFFLINE_SYNC
+  SYSTEME
+}
+
+enum StatutSynchronisation {
+  EN_ATTENTE
+  EN_COURS
+  SYNCHRONISEE
+  ERREUR
+  CONFLIT
+}
+
+model Utilisateur {
+  id                    String                    @id @default(cuid())
+  email                 String                    @unique
+  telephone             String                    @unique
+  motDePasseHash        String?
+  statut                StatutUtilisateur         @default(ACTIF)
+  emailVerifieLe        DateTime?
+  telephoneVerifieLe    DateTime?
+  derniereConnexionLe   DateTime?
+  creeLe                DateTime                  @default(now())
+  modifieLe             DateTime                  @updatedAt
+  supprimeLe            DateTime?
+  profil                Profil?
+  sessions              Session[]
+  verificationsEmail    VerificationEmail[]
+  verificationsTelephone VerificationTelephone[]
+  fichiers              Fichier[]
+  espaces               EspaceFinancier[]
+  categories            Categorie[]
+  transactions          TransactionFinanciere[]   @relation("TransactionsUtilisateur")
+  transactionsAnnulees  TransactionFinanciere[]   @relation("TransactionsAnnuleesPar")
+  tontinesCreees        Tontine[]                 @relation("TontinesCreees")
+  membres               MembreTontine[]
+  invitationsCreees     InvitationTontine[]       @relation("InvitationsCreees")
+  invitationsRecues     InvitationTontine[]       @relation("InvitationsRecues")
+  demandesAdhesion      DemandeAdhesion[]         @relation("DemandesAdhesion")
+  demandesDecidees      DemandeAdhesion[]         @relation("DecisionsAdhesion")
+  declarationsCotisation DeclarationCotisation[]  @relation("DeclarationsCotisation")
+  declarationsDecidees  DeclarationCotisation[]   @relation("DecisionsCotisation")
+  preuvesCotisation     PreuveCotisation[]        @relation("PreuvesCotisationCreees")
+  declarationsVersement DeclarationVersement[]    @relation("VersementsDeclares")
+  preuvesVersement      PreuveVersement[]         @relation("PreuvesVersementCreees")
+  confirmationsReception ConfirmationReception[]  @relation("ConfirmationsReceptionBeneficiaire")
+  notifications         Notification[]
+  evenementsAudit       EvenementAudit[]          @relation("ActeurAudit")
+  operations            OperationSynchronisation[]
+}
+
+model Profil {
+  id             String      @id @default(cuid())
+  utilisateurId  String      @unique
+  prenom         String
+  nom            String
+  avatarFichierId String?    @unique
+  pays           String?
+  creeLe         DateTime    @default(now())
+  modifieLe      DateTime    @updatedAt
+  utilisateur    Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  avatarFichier  Fichier?    @relation("AvatarProfil", fields: [avatarFichierId], references: [id])
+}
+
+model Session {
+  id            String      @id @default(cuid())
+  utilisateurId String
+  jetonHash     String      @unique
+  expireLe      DateTime
+  invalideLe    DateTime?
+  creeLe        DateTime    @default(now())
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  @@index([utilisateurId, expireLe])
+}
+
+model VerificationEmail {
+  id            String      @id @default(cuid())
+  utilisateurId String
+  jetonHash     String      @unique
+  expireLe      DateTime
+  verifieLe     DateTime?
+  creeLe        DateTime    @default(now())
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  @@index([utilisateurId, expireLe])
+}
+
+model VerificationTelephone {
+  id            String      @id @default(cuid())
+  utilisateurId String
+  codeHash      String
+  expireLe      DateTime
+  verifieLe     DateTime?
+  creeLe        DateTime    @default(now())
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  @@index([utilisateurId, expireLe])
+}
+
+model Fichier {
+  id              String            @id @default(cuid())
+  proprietaireId  String
+  nom             String
+  typeMime        String
+  tailleOctets    Int
+  cleStockage     String            @unique
+  creeLe          DateTime          @default(now())
+  proprietaire    Utilisateur       @relation(fields: [proprietaireId], references: [id], onDelete: Cascade)
+  avatarProfil    Profil?           @relation("AvatarProfil")
+  preuvesCotisation PreuveCotisation[]
+  preuvesVersement PreuveVersement[]
+  @@index([proprietaireId])
+}
+
+model EspaceFinancier {
+  id             String                 @id @default(cuid())
+  utilisateurId  String
+  nom            String
+  type           TypeEspace
+  statut         StatutEspaceFinancier  @default(ACTIF)
+  devise         String                 @default("XOF")
+  creeLe         DateTime               @default(now())
+  modifieLe      DateTime               @updatedAt
+  archiveLe      DateTime?
+  utilisateur    Utilisateur            @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  transactions   TransactionFinanciere[]
+  @@index([utilisateurId, statut])
+}
+
+model Categorie {
+  id            String          @id @default(cuid())
+  utilisateurId String?
+  nom           String
+  type          TypeTransaction
+  estSysteme    Boolean         @default(false)
+  estActive     Boolean         @default(true)
+  creeLe        DateTime        @default(now())
+  archiveLe     DateTime?
+  utilisateur   Utilisateur?    @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  transactions  TransactionFinanciere[]
+  @@unique([utilisateurId, nom, type])
+  @@index([utilisateurId, estActive])
+}
+
+model TransactionFinanciere {
+  id              String             @id @default(cuid())
+  utilisateurId    String
+  espaceId         String
+  categorieId      String?
+  type             TypeTransaction
+  montant          Decimal            @db.Decimal(18, 2)
+  devise           String             @default("XOF")
+  description      String
+  moyenPaiement    String?
+  dateOperation    DateTime
+  statut           StatutTransaction  @default(ACTIVE)
+  annuleLe         DateTime?
+  annuleParId      String?
+  motifAnnulation  String?
+  creeLe           DateTime           @default(now())
+  modifieLe        DateTime           @updatedAt
+  utilisateur      Utilisateur        @relation("TransactionsUtilisateur", fields: [utilisateurId], references: [id], onDelete: Cascade)
+  espace           EspaceFinancier    @relation(fields: [espaceId], references: [id], onDelete: Cascade)
+  categorie        Categorie?         @relation(fields: [categorieId], references: [id], onDelete: SetNull)
+  annulePar        Utilisateur?       @relation("TransactionsAnnuleesPar", fields: [annuleParId], references: [id], onDelete: SetNull)
+  historique       HistoriqueTransaction[]
+  @@index([utilisateurId, dateOperation])
+  @@index([espaceId, dateOperation])
+}
+
+model HistoriqueTransaction {
+  id              String                  @id @default(cuid())
+  transactionId   String
+  action          String
+  ancienneValeur  Json?
+  nouvelleValeur  Json?
+  creeLe          DateTime                @default(now())
+  transaction     TransactionFinanciere   @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  @@index([transactionId, creeLe])
+}
+
+model Tontine {
+  id                     String                  @id @default(cuid())
+  nom                    String
+  description            String?
+  createurId             String
+  mode                   ModeTontine
+  statut                 StatutTontine           @default(EN_PREPARATION)
+  nombreParticipantsRequis Int
+  montantCotisation      Decimal                 @db.Decimal(18, 2)
+  devise                 String                  @default("XOF")
+  frequence              FrequenceTontine
+  dateCommencement       DateTime
+  fuseauHoraire          String
+  visibilite             VisibiliteTontine        @default(PRIVEE)
+  modeDemarrage          ModeDemarrageTontine     @default(MANUEL)
+  strategieAdhesion      StrategieAdhesion        @default(INVITATION_ET_DEMANDE)
+  methodeOrdre           MethodeOrdreBeneficiaires @default(MANUEL)
+  adhesionsFermees       Boolean                  @default(false)
+  reversementsPartielsAutorises Boolean           @default(false)
+  rappelsActifs          Boolean                  @default(false)
+  delaiGraceJours        Int                      @default(0)
+  penaliteActive         Boolean                  @default(false)
+  penaliteMontant        Decimal?                 @db.Decimal(18, 2)
+  reglesVerrouilleesLe   DateTime?
+  nombreTours            Int?
+  demarreeLe             DateTime?
+  termineeLe             DateTime?
+  archiveeLe             DateTime?
+  creeLe                 DateTime                @default(now())
+  modifieLe              DateTime                @updatedAt
+  createur               Utilisateur             @relation("TontinesCreees", fields: [createurId], references: [id])
+  membres                MembreTontine[]
+  invitations            InvitationTontine[]
+  demandesAdhesion       DemandeAdhesion[]
+  ordresBeneficiaires    OrdreBeneficiaire[]
+  rotations              Rotation[]
+  @@index([createurId, statut])
+}
+
+model MembreTontine {
+  id                  String              @id @default(cuid())
+  tontineId           String
+  utilisateurId       String
+  role                RoleMembreTontine   @default(MEMBRE)
+  statut              StatutMembre        @default(EN_ATTENTE)
+  position            Int?
+  rejointLe           DateTime            @default(now())
+  approuveLe          DateTime?
+  retireLe            DateTime?
+  tontine             Tontine             @relation(fields: [tontineId], references: [id], onDelete: Cascade)
+  utilisateur         Utilisateur         @relation(fields: [utilisateurId], references: [id])
+  ordresBeneficiaires OrdreBeneficiaire[]
+  rotationsBeneficiees Rotation[]          @relation("BeneficiaireRotation")
+  cotisations         Cotisation[]
+  @@unique([tontineId, utilisateurId])
+  @@index([tontineId, statut])
+}
+
+model InvitationTontine {
+  id            String      @id @default(cuid())
+  tontineId     String
+  createurId    String
+  inviteId      String?
+  code          String      @unique
+  jetonHash     String      @unique
+  expireLe      DateTime
+  estActive     Boolean     @default(true)
+  statut        StatutInvitationTontine @default(EN_ATTENTE)
+  accepteeLe    DateTime?
+  refuseeLe     DateTime?
+  revoqueeLe    DateTime?
+  creeLe        DateTime    @default(now())
+  tontine       Tontine     @relation(fields: [tontineId], references: [id], onDelete: Cascade)
+  createur      Utilisateur @relation("InvitationsCreees", fields: [createurId], references: [id])
+  invite        Utilisateur? @relation("InvitationsRecues", fields: [inviteId], references: [id])
+  @@index([tontineId, estActive])
+  @@index([inviteId, statut])
+}
+
+model DemandeAdhesion {
+  id          String                  @id @default(cuid())
+  tontineId   String
+  demandeurId String
+  statut      StatutDemandeAdhesion   @default(EN_ATTENTE)
+  motif       String?
+  consentementAccepteLe DateTime
+  versionConditions String
+  empreinteConditions String
+  decideParId String?
+  decideLe    DateTime?
+  creeLe      DateTime                @default(now())
+  tontine     Tontine                 @relation(fields: [tontineId], references: [id], onDelete: Cascade)
+  demandeur   Utilisateur              @relation("DemandesAdhesion", fields: [demandeurId], references: [id])
+  decidePar   Utilisateur?             @relation("DecisionsAdhesion", fields: [decideParId], references: [id])
+  @@unique([tontineId, demandeurId])
+  @@index([tontineId, statut])
+}
+
+model OrdreBeneficiaire {
+  id        String         @id @default(cuid())
+  tontineId String
+  membreId  String
+  version   Int
+  position  Int
+  creeLe    DateTime       @default(now())
+  tontine   Tontine        @relation(fields: [tontineId], references: [id], onDelete: Cascade)
+  membre    MembreTontine  @relation(fields: [membreId], references: [id], onDelete: Cascade)
+  @@unique([tontineId, version, position])
+  @@unique([tontineId, version, membreId])
+  @@index([membreId])
+}
+
+model Rotation {
+  id                   String                 @id @default(cuid())
+  tontineId            String
+  numero               Int
+  beneficiaireId       String
+  statut               StatutRotation         @default(A_VENIR)
+  debutLe              DateTime
+  echeanceLe           DateTime
+  montantTheorique     Decimal                @db.Decimal(18, 2)
+  montantValide        Decimal                @default(0) @db.Decimal(18, 2)
+  versementEffectueLe  DateTime?
+  termineeLe           DateTime?
+  creeLe               DateTime               @default(now())
+  tontine              Tontine                @relation(fields: [tontineId], references: [id], onDelete: Cascade)
+  beneficiaire         MembreTontine          @relation("BeneficiaireRotation", fields: [beneficiaireId], references: [id])
+  cotisations          Cotisation[]
+  versements           DeclarationVersement[]
+  confirmationReception ConfirmationReception?
+  @@unique([tontineId, numero])
+  @@index([tontineId, statut])
+  @@index([beneficiaireId])
+}
+
+model Cotisation {
+  id             String              @id @default(cuid())
+  rotationId     String
+  membreId       String
+  montantAttendu Decimal             @db.Decimal(18, 2)
+  montantValide  Decimal             @default(0) @db.Decimal(18, 2)
+  statut         StatutCotisation    @default(A_PAYER)
+  creeLe         DateTime            @default(now())
+  modifieLe      DateTime            @updatedAt
+  rotation       Rotation            @relation(fields: [rotationId], references: [id], onDelete: Cascade)
+  membre         MembreTontine       @relation(fields: [membreId], references: [id])
+  declarations   DeclarationCotisation[]
+  @@unique([rotationId, membreId])
+  @@index([membreId, statut])
+}
+
+model DeclarationCotisation {
+  id             String              @id @default(cuid())
+  cotisationId   String
+  declarantId    String
+  montant        Decimal             @db.Decimal(18, 2)
+  statut         StatutDeclaration   @default(EN_ATTENTE_VALIDATION)
+  motifRejet     String?
+  decideParId    String?
+  declareLe      DateTime            @default(now())
+  decideLe       DateTime?
+  version        Int                 @default(1)
+  cotisation     Cotisation          @relation(fields: [cotisationId], references: [id], onDelete: Cascade)
+  declarant      Utilisateur         @relation("DeclarationsCotisation", fields: [declarantId], references: [id])
+  decidePar      Utilisateur?        @relation("DecisionsCotisation", fields: [decideParId], references: [id])
+  preuves        PreuveCotisation[]
+  @@index([cotisationId, statut])
+}
+
+model PreuveCotisation {
+  id             String                 @id @default(cuid())
+  declarationId  String
+  fichierId      String
+  creeParId      String
+  version        Int                    @default(1)
+  creeLe         DateTime               @default(now())
+  declaration    DeclarationCotisation  @relation(fields: [declarationId], references: [id], onDelete: Cascade)
+  fichier        Fichier                @relation(fields: [fichierId], references: [id])
+  creePar        Utilisateur            @relation("PreuvesCotisationCreees", fields: [creeParId], references: [id])
+  @@index([declarationId])
+}
+
+model DeclarationVersement {
+  id             String             @id @default(cuid())
+  rotationId     String
+  declarantId    String
+  montant        Decimal            @db.Decimal(18, 2)
+  statut         StatutVersement    @default(DECLARE)
+  contesteLe     DateTime?
+  motifContestation String?
+  declareLe      DateTime           @default(now())
+  confirmeLe     DateTime?
+  rotation       Rotation           @relation(fields: [rotationId], references: [id], onDelete: Cascade)
+  declarant      Utilisateur        @relation("VersementsDeclares", fields: [declarantId], references: [id])
+  preuves        PreuveVersement[]
+  @@index([rotationId, statut])
+}
+
+model PreuveVersement {
+  id             String                @id @default(cuid())
+  declarationId  String
+  fichierId      String
+  creeParId      String
+  version        Int                   @default(1)
+  creeLe         DateTime              @default(now())
+  declaration    DeclarationVersement  @relation(fields: [declarationId], references: [id], onDelete: Cascade)
+  fichier        Fichier               @relation(fields: [fichierId], references: [id])
+  creePar        Utilisateur           @relation("PreuvesVersementCreees", fields: [creeParId], references: [id])
+  @@index([declarationId])
+}
+
+model ConfirmationReception {
+  id             String                    @id @default(cuid())
+  rotationId     String                    @unique
+  beneficiaireId String
+  statut         StatutConfirmationReception @default(EN_ATTENTE)
+  expireLe       DateTime
+  confirmeLe     DateTime?
+  creeLe         DateTime                  @default(now())
+  rotation       Rotation                  @relation(fields: [rotationId], references: [id], onDelete: Cascade)
+  beneficiaire   Utilisateur               @relation("ConfirmationsReceptionBeneficiaire", fields: [beneficiaireId], references: [id])
+  @@index([beneficiaireId, statut])
+}
+
+model Notification {
+  id            String           @id @default(cuid())
+  utilisateurId String
+  type          TypeNotification
+  titre         String
+  message       String
+  donnees       Json?
+  cibleUrl      String?
+  lueLe         DateTime?
+  creeLe        DateTime         @default(now())
+  utilisateur   Utilisateur      @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  @@index([utilisateurId, lueLe])
+}
+
+model EvenementAudit {
+  id            String               @id @default(cuid())
+  acteurId      String?
+  entiteType    String
+  entiteId      String
+  action        String
+  source        SourceEvenementAudit @default(SYSTEME)
+  anciennesDonnees Json?
+  nouvellesDonnees Json?
+  contexte      Json?
+  creeLe        DateTime             @default(now())
+  acteur        Utilisateur?         @relation("ActeurAudit", fields: [acteurId], references: [id], onDelete: SetNull)
+  @@index([entiteType, entiteId, creeLe])
+  @@index([acteurId, creeLe])
+}
+
+model OperationSynchronisation {
+  id             String                @id @default(cuid())
+  utilisateurId  String
+  idempotencyKey String
+  typeOperation  String
+  entiteType     String
+  entiteId       String
+  statut         StatutSynchronisation @default(EN_ATTENTE)
+  requete        Json
+  resultat       Json?
+  erreur         Json?
+  creeLe         DateTime              @default(now())
+  traiteeLe      DateTime?
+  modifieLe      DateTime              @updatedAt
+  utilisateur    Utilisateur           @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  @@unique([utilisateurId, idempotencyKey])
+  @@index([utilisateurId, statut])
+}
