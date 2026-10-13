@@ -1,5 +1,17 @@
 # Journal développement
 
+## Intervention 0034 — Redirection post-authentification
+
+J'ai corrigé la redirection qui envoyait toujours la connexion vers le tableau utilisateur. La route de connexion relit maintenant les rôles persistés, applique les permissions centralisées et calcule côté serveur une destination interne autorisée. Un Super Admin actif arrive par défaut dans l'administration globale ; un utilisateur standard conserve le tableau utilisateur. Les retours Tontine restent préservés, tandis qu'un retour administratif non autorisé ou externe est refusé.
+
+Je n'ai exécuté aucun test ni commande technique. J'ai préparé les cas de redirection, session, suspension et changement de rôle pour validation manuelle.
+
+## Intervention 0033 — Administration globale Super Admin
+
+J'ai ajouté le socle Super Admin séparé de l'application utilisateur. J'ai persisté les rôles globaux, centralisé les permissions par défaut refusées, complété le journal d'audit et préparé l'amorçage manuel, explicite et idempotent du premier Super Admin. J'ai intégré l'espace `/administration-plateforme` avec tableaux de supervision, utilisateurs, rôles, module Tontines, audit et paramètres honnêtement non modifiables.
+
+J'ai réemployé l'identité visuelle TontiTrack après analyse des composants existants : logo, palette verte, fonds chauds, rayons, espacements, composants Radix/Tailwind et états UI. Je n'ai lancé aucune commande technique ni amorçage ; les validations restent manuelles.
+
 ## Intervention 0032 — Clôture et archivage des tontines
 
 J'ai ajouté une clôture normale transactionnelle, un rapport immuable des montants et rotations réels, puis un archivage distinct sans suppression. Je bloque les opérations financières après clôture et j'affiche les conditions, blocages, rapport, résultat membre et archives. La migration du rapport est préparée, mais ni appliquée ni validée techniquement. Une contestation reste bloquante car aucun statut de règlement sûr n'existe dans le modèle actuel.

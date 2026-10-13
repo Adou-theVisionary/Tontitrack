@@ -3,6 +3,7 @@ import { Prisma, StatutUtilisateur } from "@prisma/client";
 import { hasherMotDePasse, verifierMotDePasse } from "@/lib/auth/mot-de-passe";
 import type { DonneesInscription } from "@/lib/auth/contrats";
 import { authentificationRepository } from "@/repositories/authentification.repository";
+import { permissionsEffectives } from "@/lib/administration/permissions";
 
 export class ErreurAuthentification extends Error {
   constructor(public code: string, message: string, public statutHttp: number) { super(message); }
@@ -44,5 +45,8 @@ export async function authentifierUtilisateur(email: string, motDePasse: string)
   if (!utilisateur?.motDePasseHash || !(await verifierMotDePasse(motDePasse, utilisateur.motDePasseHash))) throw erreur;
   if (utilisateur.statut !== StatutUtilisateur.ACTIF) throw new ErreurAuthentification("COMPTE_INDISPONIBLE", "Ce compte ne permet pas la connexion.", 403);
   await authentificationRepository.enregistrerDerniereConnexion(utilisateur.id);
-  return presenterUtilisateur(utilisateur);
+  return {
+    utilisateur: presenterUtilisateur(utilisateur),
+    permissions: permissionsEffectives(utilisateur.rolesPlateforme.map((attribution) => attribution.role)),
+  };
 }

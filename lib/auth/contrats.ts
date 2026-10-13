@@ -19,6 +19,7 @@ export const inscriptionSchema = z.object({
 export const connexionSchema = z.object({
   email: z.string().trim().email().transform((valeur) => valeur.toLowerCase()),
   motDePasse: z.string().min(1),
+  retour: z.string().max(2_000).optional(),
 });
 
 export type DonneesInscription = z.infer<typeof inscriptionSchema>;

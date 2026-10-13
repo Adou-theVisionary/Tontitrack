@@ -5,7 +5,7 @@ export const authentificationRepository = {
     return prisma.utilisateur.findFirst({ where: { OR: [{ email }, { telephone }] }, select: { id: true } });
   },
   trouverParEmail(email: string) {
-    return prisma.utilisateur.findUnique({ where: { email }, include: { profil: true } });
+    return prisma.utilisateur.findUnique({ where: { email }, include: { profil: true, rolesPlateforme: true } });
   },
   creerCompte(donnees: { email: string; telephone: string; motDePasseHash: string; prenom: string; nom: string; jetonVerificationHash: string; expireLe: Date }) {
     return prisma.$transaction(async (transaction) => {

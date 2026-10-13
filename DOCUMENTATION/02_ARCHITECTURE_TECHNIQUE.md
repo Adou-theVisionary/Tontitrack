@@ -1,12 +1,26 @@
 # Architecture technique
 
+## Phase 3.1 — Administration globale
+
+J'ai ajouté une frontière serveur distincte pour `/administration-plateforme`. Le layout vérifie la session puis les rôles globaux persistés ; chaque route `/api/administration/*` revérifie session, permission, origine des mutations et limite locale de requêtes. Le frontend n'accède jamais à Prisma.
+
+Le registre `lib/administration/permissions.ts` centralise droits, rôles et modules. L'absence de droit est un refus. Les rôles `SUPER_ADMIN`, `ADMIN_SUPPORT` et `ADMIN_AUDIT` sont indépendants des rôles `CREATEUR`/`MEMBRE` d'une tontine. J'ai conservé `EvenementAudit` comme journal append-only, enrichi avec module, autorisation, résultat et motif. La suspension invalide les sessions et le dernier Super Admin actif est protégé dans une transaction sérialisable.
+
+L'interface réemploie `Logo`, Tailwind, composants Radix, `Button`, `Table`, `Dialog` et les états UI existants. Je conserve palette verte, fonds chauds, rayons et grille responsive de l'application utilisateur plutôt que de créer une charte administrative séparée.
+
+## Correction redirection après authentification — 13/10/2026
+
+J'ai centralisé le choix de destination dans `lib/navigation/destination-authentification.ts`. La route de connexion relit les rôles persistés au moment de l'authentification, les convertit en permissions via le registre puis retourne une destination interne autorisée. Un rôle disposant de `plateforme.tableau_de_bord.lire`, dont `SUPER_ADMIN`, arrive dans `/administration-plateforme` lorsqu'aucun retour autorisé n'est demandé. Un utilisateur standard arrive dans `/tableau-de-bord`.
+
+Une destination demandée est conservée seulement si elle est interne, autorisée pour les permissions relues et compatible avec les chemins prévus. `/administration-plateforme` est donc conservé pour un administrateur autorisé mais ignoré pour un utilisateur standard. Les layouts et routes API continuent de contrôler session et permissions : la destination ne constitue pas une preuve d'accès.
+
 ## Actuelle — Confirmé
 
 Next.js App Router, React, TypeScript, Tailwind, Radix UI. `app/` porte routes ; `components/` interface ; `contexts/AppContext.tsx` état client ; `services/mock-api.ts` données/règles simulées ; `services/tontitrack-service.ts` est alias mock.
 
-Prisma/PostgreSQL : `prisma/schema.prisma`, `lib/prisma.ts`, `repositories/`. Aucun endpoint API ni service métier serveur ne relie UI à repositories.
+Prisma/PostgreSQL : `prisma/schema.prisma`, `lib/prisma.ts`, `repositories/`. Les domaines authentification, Tontines et administration passent par routes API, services métier et repositories côté serveur ; l'interface ne contacte jamais ces couches directement.
 
-Flux actuel : composant → service mock → tableaux `lib/donnees-mock.ts` → snapshot `sessionStorage`.
+Flux encore temporaire pour Finances : composant → service mock → tableaux `lib/donnees-mock.ts` → snapshot `sessionStorage`. Les flux authentification, Tontines et administration utilisent les API sécurisées.
 
 Flux auth actuel : interface → routes `/api/auth` → service métier → repositories → Prisma → PostgreSQL. Interface ne doit jamais appeler Prisma/DB. Les domaines finances et tontines restent sur mock jusqu'à leurs API dédiées.
 

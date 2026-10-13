@@ -31,7 +31,7 @@ export async function obtenirUtilisateurAuthentifie() {
   if (!jeton) return null;
 
   const session = await sessionsRepository.trouverValide(empreinteJeton(jeton));
-  if (!session || session.invalideLe || session.expireLe <= new Date()) return null;
+  if (!session || session.invalideLe || session.expireLe <= new Date() || session.utilisateur.statut !== "ACTIF") return null;
   return session.utilisateur;
 }
 

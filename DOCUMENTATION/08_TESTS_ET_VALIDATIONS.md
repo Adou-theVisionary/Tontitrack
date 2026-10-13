@@ -1,5 +1,15 @@
 # Tests et validations
 
+## Intervention 0034 — Redirection post-authentification
+
+J'ai préparé `tests/auth/redirection-authentification.test.ts` sans l'exécuter. Je dois vérifier manuellement : connexion d'un Super Admin actif vers administration, connexion standard vers tableau utilisateur, compte suspendu refusé, retrait/attribution de rôle visible à la connexion suivante et à chaque lecture de session, session invalidée ou expirée redirigée vers connexion, retour Tontine interne conservé, retour administratif seulement si autorisé, retour externe refusé, déconnexion puis reconnexion, et absence de boucle entre connexion, espace utilisateur et administration.
+
+## Intervention 0033 — Administration globale Super Admin
+
+J'ai préparé `tests/administration/phase-3-1-super-admin.test.ts` comme inventaire de scénarios, sans l'exécuter. Je dois vérifier avec des comptes et une base de test fictifs : absence de session, refus par défaut, matrice complète des trois rôles, amorçage unique, suspension/réactivation, invalidation immédiate de session, attribution/retrait, protection concurrente du dernier Super Admin, audit append-only, pagination, module Tontines en lecture seule, absence de preuve privée et responsive mobile/bureau.
+
+Je dois aussi vérifier l'accessibilité clavier des liens et dialogues, les libellés des champs, les focus visibles, les erreurs de chargement et les états vides. Je ne considère aucun de ces tests réussi avant exécution manuelle et transmission du résultat.
+
 ## Intervention 0032 — Clôture et archivage des tontines
 
 Je n'ai exécuté aucune commande ni test. Je dois d'abord relire la migration `20261013120000_cloture_archivage`, sauvegarder la base, puis exécuter manuellement depuis `C:\Users\isasa\Desktop\tontitrack_prod` :

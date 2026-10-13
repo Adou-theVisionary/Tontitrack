@@ -4,7 +4,9 @@ export function destinationRetourAutorisee(valeur: string | null | undefined, de
   try {
     const url = new URL(valeur, "https://tontitrack.local");
     if (url.origin !== "https://tontitrack.local") return defaut;
-    if (!url.pathname.startsWith("/tontines") && url.pathname !== "/tableau-de-bord") return defaut;
+    const retourTontine = url.pathname === "/tontines" || url.pathname.startsWith("/tontines/");
+    const retourAdministration = url.pathname === "/administration-plateforme" || url.pathname.startsWith("/administration-plateforme/");
+    if (!retourTontine && url.pathname !== "/tableau-de-bord" && !retourAdministration) return defaut;
     return `${url.pathname}${url.search}`;
   } catch {
     return defaut;

@@ -3,6 +3,7 @@ import { connexionSchema } from "@/lib/auth/contrats";
 import { NOM_COOKIE_SESSION, creerSession, optionsCookieSession } from "@/lib/auth/session";
 import { ErreurAuthentification, authentifierUtilisateur } from "@/services/authentification.service";
 import { autoriserTentativeConnexion, reinitialiserTentativesConnexion } from "@/lib/auth/limite-connexion";
+import { destinationApresAuthentification } from "@/lib/navigation/destination-authentification";
 
 export async function POST(requete: Request) {
   try {
@@ -12,10 +13,11 @@ export async function POST(requete: Request) {
     if (!autoriserTentativeConnexion(cleLimite)) {
       return NextResponse.json({ erreur: { code: "TROP_DE_TENTATIVES", message: "Trop de tentatives. Réessayez plus tard." } }, { status: 429 });
     }
-    const utilisateur = await authentifierUtilisateur(donnees.email, donnees.motDePasse);
+    const authentification = await authentifierUtilisateur(donnees.email, donnees.motDePasse);
     reinitialiserTentativesConnexion(cleLimite);
-    const session = await creerSession(utilisateur.id);
-    const reponse = NextResponse.json({ donnees: { utilisateur } });
+    const session = await creerSession(authentification.utilisateur.id);
+    const destination = destinationApresAuthentification({ permissions: authentification.permissions, retour: donnees.retour });
+    const reponse = NextResponse.json({ donnees: { utilisateur: authentification.utilisateur, destination } });
     reponse.cookies.set(NOM_COOKIE_SESSION, session.jeton, optionsCookieSession(session.expireLe));
     return reponse;
   } catch (erreur) {

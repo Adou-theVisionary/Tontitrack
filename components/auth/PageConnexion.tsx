@@ -25,11 +25,11 @@ export function PageConnexion() {
     setChargement(true);
     setErreur("");
     try {
-      const reponse = await fetch("/api/auth/connexion", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", body: JSON.stringify({ email, motDePasse }) });
+      const reponse = await fetch("/api/auth/connexion", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", body: JSON.stringify({ email, motDePasse, retour }) });
       const corps = await reponse.json();
       if (!reponse.ok) throw new Error(corps.erreur?.message);
       connecterUtilisateur({ ...corps.donnees.utilisateur, dateInscription: "" });
-      router.replace(retour);
+      router.replace(corps.donnees.destination);
     } catch (erreur) {
       setErreur(erreur instanceof Error && erreur.message ? erreur.message : "Email ou mot de passe incorrect.");
     } finally {

@@ -5,9 +5,18 @@ export const sessionsRepository = {
     return prisma.session.create({ data: { utilisateurId, jetonHash, expireLe } });
   },
   trouverValide(jetonHash: string) {
-    return prisma.session.findUnique({ where: { jetonHash }, include: { utilisateur: { include: { profil: true } } } });
+    return prisma.session.findUnique({
+      where: { jetonHash },
+      include: { utilisateur: { include: { profil: true, rolesPlateforme: true } } },
+    });
   },
   invalider(jetonHash: string) {
     return prisma.session.updateMany({ where: { jetonHash, invalideLe: null }, data: { invalideLe: new Date() } });
+  },
+  invaliderToutesPourUtilisateur(utilisateurId: string) {
+    return prisma.session.updateMany({
+      where: { utilisateurId, invalideLe: null },
+      data: { invalideLe: new Date() },
+    });
   },
 };

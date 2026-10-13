@@ -1,5 +1,19 @@
 # Décisions techniques
 
+## Destination post-authentification calculée côté serveur — 13/10/2026
+
+Décideur : propriétaire, par demande de correction. Je décide la destination après authentification dans la route serveur à partir des rôles persistés et du registre de permissions, plutôt que dans le composant de connexion. Cette décision évite que l'interface doive connaître ou interpréter les rôles, tout en préservant une extension future vers d'autres espaces et permissions.
+
+Je conserve un retour interne demandé lorsqu'il est autorisé ; je refuse les URL externes et tout retour administratif sans permission de tableau de bord plateforme. Les layouts et API réappliquent leurs protections : la redirection améliore seulement le parcours et n'octroie aucun droit. Voir `INTERVENTIONS/0034_CORRECTION_REDIRECTION_AUTHENTIFICATION.md`.
+
+## Administration globale par rôles persistés et refus par défaut — 13/10/2026
+
+Décideur : propriétaire, par demande Phase 3.1. Je sépare strictement rôles de plateforme et rôles de tontine. Une attribution active persistée porte uniquement `SUPER_ADMIN`, `ADMIN_SUPPORT` ou `ADMIN_AUDIT`; les permissions sont déclarées explicitement dans un registre serveur. L'absence de permission vaut refus, afin qu'un nouveau module ne devienne jamais accessible par défaut.
+
+Je garde le premier Super Admin hors de l'inscription publique : il est amorcé manuellement sur un compte actif explicitement identifié, sans secret ou identifiant codé en dur. La transaction sérialisable refuse un second amorçage et protège le dernier Super Admin actif d'une suspension ou d'un retrait concurrent. Toute modification de rôle ou de statut est auditée et la suspension invalide les sessions.
+
+Je limite la première spécialisation au module réellement disponible, Tontines, en lecture de supervision. Je n'accorde aucune mutation financière ni accès aux preuves privées depuis le Super Admin. Critère avant production : migration revue et appliquée sur environnement approprié, amorçage tracé, contrôle de permissions et concurrence validés, limite distribuée choisie pour le déploiement multi-instance et parcours manuels réussis. Voir `INTERVENTIONS/0033_ADMINISTRATION_GLOBALE_SUPER_ADMIN.md`.
+
 ## Clôture normale, rapport immuable et archivage — 13/10/2026
 
 Décideur : propriétaire, par demande Phase 2.6. Je distingue clôture et archivage : la clôture vérifie toutes les données financières réelles puis produit un unique rapport ; l'archivage intervient seulement après cette clôture et ne supprime rien. Je conserve les statuts `TERMINEE` et `ARCHIVEE` déjà présents au lieu d'ajouter un état financier parallèle.

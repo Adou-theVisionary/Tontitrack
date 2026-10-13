@@ -1,5 +1,15 @@
 # Problèmes et solutions
 
+## Intervention 0034 — Destination de connexion indépendante des rôles
+
+La page de connexion validait uniquement un retour client avec `/tableau-de-bord` comme défaut. Elle ne recevait ni rôle ni permission, même si la session relisait correctement les rôles depuis PostgreSQL. Ce décalage envoyait un Super Admin vers l'espace utilisateur après connexion. J'ai déplacé la décision vers la route serveur, où les rôles sont lus depuis la source persistée et où les permissions déterminent la destination autorisée. Les layouts restent l'autorité finale.
+
+## Phase 3.1 — Aucun Super Admin implicite
+
+Le produit ne possédait ni rôle global, ni premier administrateur sûr. J'ai écarté l'attribution automatique par e-mail, domaine, inscription ou identifiant codé en dur : ces approches ouvriraient une élévation de privilège difficile à auditer. Je prépare donc uniquement un script manuel qui exige un utilisateur existant, actif, une confirmation explicite et une base déjà migrée. Il reste à l'exécuter manuellement sur l'environnement de test choisi.
+
+La limite de requêtes administrative est volontairement en mémoire, comme celle déjà utilisée par l'authentification. Elle protège une instance mais doit être complétée par une limite partagée avant tout déploiement multi-instance.
+
 | Statut | Problème | Diagnostic | Action requise |
 |---|---|---|---|
 | Bloquant Phase 2.2 | Modèle Tontine insuffisant | Configuration, demandes et invitations ciblées absentes du schéma Prisma actuel | Valider extension, générer migration contrôlée et Prisma Client ; voir intervention 0010 |

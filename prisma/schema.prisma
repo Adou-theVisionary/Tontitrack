@@ -14,6 +14,13 @@ enum StatutUtilisateur {
   SUPPRIME
 }
 
+/// Rôles globaux, indépendants des rôles au sein d'une tontine.
+enum RolePlateforme {
+  SUPER_ADMIN
+  ADMIN_SUPPORT
+  ADMIN_AUDIT
+}
+
 enum TypeEspace {
   PERSONNEL
   ACTIVITE
@@ -217,7 +224,20 @@ model Utilisateur {
   evenementsReversement EvenementReversement[]    @relation("EvenementsReversementActeur")
   notifications         Notification[]
   evenementsAudit       EvenementAudit[]          @relation("ActeurAudit")
+  rolesPlateforme       AttributionRolePlateforme[]
   operations            OperationSynchronisation[]
+}
+
+/// Attribution active d'un rôle global. Les retraits restent traçables dans EvenementAudit.
+model AttributionRolePlateforme {
+  id            String          @id @default(cuid())
+  utilisateurId String
+  role          RolePlateforme
+  attribueParId String?
+  creeLe        DateTime        @default(now())
+  utilisateur   Utilisateur     @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  @@unique([utilisateurId, role])
+  @@index([role, creeLe])
 }
 
 model Profil {
@@ -656,6 +676,10 @@ model EvenementAudit {
   entiteId      String
   action        String
   source        SourceEvenementAudit @default(SYSTEME)
+  module        String?
+  autorisation  String?
+  resultat      String               @default("SUCCES")
+  motif         String?
   anciennesDonnees Json?
   nouvellesDonnees Json?
   contexte      Json?
