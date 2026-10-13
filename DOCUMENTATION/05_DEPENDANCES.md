@@ -18,3 +18,11 @@ Je n'ai ajouté aucune dépendance. Hash mot de passe utilise `crypto.scrypt` No
 `typescript` et `@types/*` sont déclarés dans `dependencies`, non `devDependencies`. Lors audit 10/10/2026, `next lint` a tenté installation réseau puis échoué. Correction reportée, aucune dépendance modifiée cette intervention.
 
 Toute ajout/retrait/mise à jour futur doit être consigné dans ce fichier et rapport intervention.
+
+## Phase 2.4 — Cotisations et retards
+
+Je n'ai ajouté aucune dépendance. Transactions, décimaux et génération aléatoire utilisent Prisma et Node.js déjà déclarés. Notifications passent par modèle Prisma existant ; aucun fournisseur e-mail, SMS, paiement ou stockage de justificatifs n'est ajouté.
+
+## Intervention 0028 — Parcours invitations et preuves
+
+Je n'ai ajouté aucune dépendance. Le stockage privé utilise les API Node.js déjà présentes ; un volume persistant ou fournisseur privé devra être configuré avant déploiement.

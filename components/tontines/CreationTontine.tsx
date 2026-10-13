@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
 import { ModalConfirmation } from "@/components/ModalConfirmation";
 import { libelleModeTontine, calculerNombreTours } from "@/lib/format";
-import { appelApi } from "@/lib/api-client";
+import { appelApi, ErreurApi } from "@/lib/api-client";
 import type { ModeTontine, FrequenceTontine, Tontine, MembreTontine } from "@/types";
 
 const etapes = [
@@ -17,46 +17,133 @@ const etapes = [
   { numero: 5, label: "Confirmation", icon: Check },
 ];
 
+type FormulaireCreation = {
+  nom: string;
+  nombreParticipantsRequis: number;
+  montantCotisation: string;
+  frequence: FrequenceTontine;
+  mode: ModeTontine;
+  dateCommencement: string;
+  fuseauHoraire: string;
+  visibilite: "PUBLIQUE" | "PRIVEE";
+  modeDemarrage: "MANUEL" | "AUTOMATIQUE";
+  strategieAdhesion: "INVITATION" | "DEMANDE" | "INVITATION_ET_DEMANDE";
+  methodeOrdre: "MANUEL" | "ALEATOIRE";
+  reversementsPartielsAutorises: boolean;
+  rappelsActifs: boolean;
+  delaiGraceJours: number;
+  penaliteActive: boolean;
+};
+
+type ChampFormulaire = keyof FormulaireCreation | "description" | "penaliteMontant";
+type ErreursFormulaire = Partial<Record<ChampFormulaire, string>>;
+
+const etapeParChamp: Record<ChampFormulaire, number> = {
+  nom: 1,
+  nombreParticipantsRequis: 1,
+  montantCotisation: 1,
+  dateCommencement: 1,
+  fuseauHoraire: 1,
+  frequence: 1,
+  mode: 2,
+  visibilite: 2,
+  modeDemarrage: 2,
+  strategieAdhesion: 2,
+  methodeOrdre: 2,
+  reversementsPartielsAutorises: 2,
+  rappelsActifs: 2,
+  delaiGraceJours: 2,
+  penaliteActive: 2,
+  description: 1,
+  penaliteMontant: 2,
+};
+
+function validerFormulaire(formulaire: FormulaireCreation): ErreursFormulaire {
+  const erreurs: ErreursFormulaire = {};
+  const montant = Number(formulaire.montantCotisation);
+  const dateCommencement = new Date(formulaire.dateCommencement);
+
+  if (formulaire.nom.trim().length < 3) erreurs.nom = "Le nom doit contenir au moins 3 caractères.";
+  if (!Number.isInteger(formulaire.nombreParticipantsRequis) || formulaire.nombreParticipantsRequis < 2 || formulaire.nombreParticipantsRequis > 200) erreurs.nombreParticipantsRequis = "Saisissez un nombre entier entre 2 et 200.";
+  if (!Number.isFinite(montant) || montant <= 0) erreurs.montantCotisation = "Le montant doit être supérieur à zéro.";
+  if (!formulaire.dateCommencement) erreurs.dateCommencement = "La date de commencement est requise.";
+  else if (Number.isNaN(dateCommencement.getTime()) || dateCommencement <= new Date()) erreurs.dateCommencement = "Choisissez une date de démarrage future.";
+  if (!formulaire.fuseauHoraire.trim()) erreurs.fuseauHoraire = "Le fuseau horaire est requis.";
+
+  return erreurs;
+}
+
+function extraireErreursValidation(erreur: ErreurApi): ErreursFormulaire {
+  return erreur.details.reduce<ErreursFormulaire>((erreurs, detail) => {
+    if (detail.champ in etapeParChamp) erreurs[detail.champ as ChampFormulaire] = detail.message;
+    return erreurs;
+  }, {});
+}
+
 export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; onCreee: (tontineId: string) => void }) {
   const { utilisateur } = useApp();
   const [etape, setEtape] = useState(1);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormulaireCreation>({
     nom: "",
     nombreParticipantsRequis: 5,
     montantCotisation: "",
-    devise: "XOF",
-    frequence: "MENSUELLE" as FrequenceTontine,
-    mode: "TOURNANT_EXCLU" as ModeTontine,
+    frequence: "MENSUELLE",
+    mode: "TOURNANT_EXCLU",
     dateCommencement: "",
     fuseauHoraire: "Africa/Niamey",
-    visibilite: "PRIVEE" as const, modeDemarrage: "MANUEL" as const,
-    strategieAdhesion: "INVITATION_ET_DEMANDE" as const, methodeOrdre: "MANUEL" as const,
+    visibilite: "PRIVEE", modeDemarrage: "MANUEL",
+    strategieAdhesion: "INVITATION_ET_DEMANDE", methodeOrdre: "MANUEL",
     reversementsPartielsAutorises: false, rappelsActifs: false, delaiGraceJours: 0, penaliteActive: false,
   });
   const [erreur, setErreur] = useState("");
+  const [erreursChamps, setErreursChamps] = useState<ErreursFormulaire>({});
   const [chargement, setChargement] = useState(false);
   const [showIdentite, setShowIdentite] = useState(false);
 
+  const modifierChamp = <Champ extends keyof FormulaireCreation>(champ: Champ, valeur: FormulaireCreation[Champ]) => {
+    setForm((courant) => ({ ...courant, [champ]: valeur }));
+    setErreur("");
+    setErreursChamps((courantes) => {
+      const suivantes = { ...courantes };
+      delete suivantes[champ as ChampFormulaire];
+      return suivantes;
+    });
+  };
+
+  const dateMinimumDemarrage = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
   const handleSuivant = () => {
     setErreur("");
-    if (etape === 1 && (!form.nom || !form.montantCotisation || !form.dateCommencement)) {
-      setErreur("Veuillez remplir tous les champs.");
+    const erreurs = validerFormulaire(form);
+    const erreursEtape = Object.fromEntries(Object.entries(erreurs).filter(([champ]) => etapeParChamp[champ as ChampFormulaire] === etape)) as ErreursFormulaire;
+    setErreursChamps(erreursEtape);
+    if (Object.keys(erreursEtape).length > 0) {
+      setErreur(`Étape ${etape} : corrigez les champs signalés.`);
       return;
     }
     setEtape((e) => Math.min(5, e + 1));
   };
 
   const handleCreer = async () => {
+    const erreurs = validerFormulaire(form);
+    if (Object.keys(erreurs).length > 0) {
+      const premierChamp = Object.keys(erreurs)[0] as ChampFormulaire;
+      setErreursChamps(erreurs);
+      setEtape(etapeParChamp[premierChamp]);
+      setErreur(`Étape ${etapeParChamp[premierChamp]} : corrigez les champs signalés.`);
+      return;
+    }
+
     setChargement(true);
+    setErreur("");
     try {
       const tontine = await appelApi<{ id: string }>("/api/tontines", { method: "POST", body: JSON.stringify({
-        nom: form.nom,
-        description: undefined,
+        nom: form.nom.trim(),
         mode: form.mode,
         montantCotisation: Number(form.montantCotisation),
         frequence: form.frequence,
         nombreParticipantsRequis: form.nombreParticipantsRequis,
-        dateCommencement: new Date(form.dateCommencement).toISOString(),
+        dateCommencement: form.dateCommencement,
         fuseauHoraire: form.fuseauHoraire,
         visibilite: form.visibilite, modeDemarrage: form.modeDemarrage, strategieAdhesion: form.strategieAdhesion,
         methodeOrdre: form.methodeOrdre, reversementsPartielsAutorises: form.reversementsPartielsAutorises,
@@ -64,7 +151,19 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
       }) });
       onCreee(tontine.id);
     } catch (erreur) {
-      setErreur(erreur instanceof Error ? erreur.message : "Une erreur est survenue lors de la création.");
+      if (erreur instanceof ErreurApi) {
+        const erreursValidation = extraireErreursValidation(erreur);
+        const premierChamp = Object.keys(erreursValidation)[0] as ChampFormulaire | undefined;
+        setErreursChamps(erreursValidation);
+        if (premierChamp) {
+          setEtape(etapeParChamp[premierChamp]);
+          setErreur(`Étape ${etapeParChamp[premierChamp]} : corrigez les champs signalés.`);
+        } else {
+          setErreur(erreur.message);
+        }
+      } else {
+        setErreur("Une erreur est survenue lors de la création.");
+      }
     } finally {
       setChargement(false);
     }
@@ -112,35 +211,51 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
           <div className="space-y-5">
             <h3 className="font-semibold text-[#20392d]">Informations générales</h3>
             <div>
-              <label className="mb-2 block text-sm font-medium text-[#405247]">Nom de la tontine</label>
+              <label htmlFor="nom" className="mb-2 block text-sm font-medium text-[#405247]">Nom de la tontine</label>
               <input
+                id="nom"
                 value={form.nom}
-                onChange={(e) => setForm({ ...form, nom: e.target.value })}
+                onChange={(e) => modifierChamp("nom", e.target.value)}
                 placeholder="Ex. Tontine Solidarité"
-                className="h-12 w-full rounded-xl border bg-white px-4 text-sm outline-none ring-[#9ed0ae] focus:ring-2"
+                aria-invalid={Boolean(erreursChamps.nom)}
+                aria-describedby={erreursChamps.nom ? "erreur-nom" : undefined}
+                className={`h-12 w-full rounded-xl border bg-white px-4 text-sm outline-none ring-[#9ed0ae] focus:ring-2 ${erreursChamps.nom ? "border-[#a53d39]" : ""}`}
               />
+              {erreursChamps.nom && <p id="erreur-nom" className="mt-1 text-xs text-[#a53d39]">{erreursChamps.nom}</p>}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#405247]">Nombre de participants requis</label>
+                <label htmlFor="nombreParticipantsRequis" className="mb-2 block text-sm font-medium text-[#405247]">Nombre de participants requis</label>
                 <input
+                  id="nombreParticipantsRequis"
                   type="number"
                   min={2}
+                  max={200}
+                  step={1}
                   value={form.nombreParticipantsRequis}
-                  onChange={(e) => setForm({ ...form, nombreParticipantsRequis: Number(e.target.value) })}
-                  className="h-12 w-full rounded-xl border bg-white px-4 text-sm outline-none ring-[#9ed0ae] focus:ring-2"
+                  onChange={(e) => modifierChamp("nombreParticipantsRequis", Number(e.target.value))}
+                  aria-invalid={Boolean(erreursChamps.nombreParticipantsRequis)}
+                  aria-describedby={erreursChamps.nombreParticipantsRequis ? "erreur-nombre-participants" : undefined}
+                  className={`h-12 w-full rounded-xl border bg-white px-4 text-sm outline-none ring-[#9ed0ae] focus:ring-2 ${erreursChamps.nombreParticipantsRequis ? "border-[#a53d39]" : ""}`}
                 />
+                {erreursChamps.nombreParticipantsRequis && <p id="erreur-nombre-participants" className="mt-1 text-xs text-[#a53d39]">{erreursChamps.nombreParticipantsRequis}</p>}
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#405247]">Montant de cotisation (XOF)</label>
+                <label htmlFor="montantCotisation" className="mb-2 block text-sm font-medium text-[#405247]">Montant de cotisation (XOF)</label>
                 <input
+                  id="montantCotisation"
                   type="number"
                   inputMode="decimal"
+                  min="0.01"
+                  step="0.01"
                   value={form.montantCotisation}
-                  onChange={(e) => setForm({ ...form, montantCotisation: e.target.value })}
+                  onChange={(e) => modifierChamp("montantCotisation", e.target.value)}
                   placeholder="100000"
-                  className="h-12 w-full rounded-xl border bg-white px-4 text-sm outline-none ring-[#9ed0ae] focus:ring-2"
+                  aria-invalid={Boolean(erreursChamps.montantCotisation)}
+                  aria-describedby={erreursChamps.montantCotisation ? "erreur-montant" : undefined}
+                  className={`h-12 w-full rounded-xl border bg-white px-4 text-sm outline-none ring-[#9ed0ae] focus:ring-2 ${erreursChamps.montantCotisation ? "border-[#a53d39]" : ""}`}
                 />
+                {erreursChamps.montantCotisation && <p id="erreur-montant" className="mt-1 text-xs text-[#a53d39]">{erreursChamps.montantCotisation}</p>}
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -148,7 +263,7 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                 <label className="mb-2 block text-sm font-medium text-[#405247]">Fréquence</label>
                 <select
                   value={form.frequence}
-                  onChange={(e) => setForm({ ...form, frequence: e.target.value as FrequenceTontine })}
+                  onChange={(e) => modifierChamp("frequence", e.target.value as FrequenceTontine)}
                   className="h-12 w-full rounded-xl border bg-white px-3 text-sm text-[#52635a] outline-none"
                 >
                   <option value="QUOTIDIENNE">Quotidienne</option>
@@ -157,21 +272,29 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#405247]">Date de commencement</label>
+                <label htmlFor="dateCommencement" className="mb-2 block text-sm font-medium text-[#405247]">Date de commencement</label>
                 <input
+                  id="dateCommencement"
                   type="date"
+                  min={dateMinimumDemarrage}
                   value={form.dateCommencement}
-                  onChange={(e) => setForm({ ...form, dateCommencement: e.target.value })}
-                  className="h-12 w-full rounded-xl border bg-white px-3 text-sm text-[#52635a] outline-none"
+                  onChange={(e) => modifierChamp("dateCommencement", e.target.value)}
+                  aria-invalid={Boolean(erreursChamps.dateCommencement)}
+                  aria-describedby={erreursChamps.dateCommencement ? "erreur-date" : undefined}
+                  className={`h-12 w-full rounded-xl border bg-white px-3 text-sm text-[#52635a] outline-none ${erreursChamps.dateCommencement ? "border-[#a53d39]" : ""}`}
                 />
+                {erreursChamps.dateCommencement && <p id="erreur-date" className="mt-1 text-xs text-[#a53d39]">{erreursChamps.dateCommencement}</p>}
               </div>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-[#405247]">Fuseau horaire</label>
+              <label htmlFor="fuseauHoraire" className="mb-2 block text-sm font-medium text-[#405247]">Fuseau horaire</label>
               <select
+                id="fuseauHoraire"
                 value={form.fuseauHoraire}
-                onChange={(e) => setForm({ ...form, fuseauHoraire: e.target.value })}
-                className="h-12 w-full rounded-xl border bg-white px-3 text-sm text-[#52635a] outline-none"
+                onChange={(e) => modifierChamp("fuseauHoraire", e.target.value)}
+                aria-invalid={Boolean(erreursChamps.fuseauHoraire)}
+                aria-describedby={erreursChamps.fuseauHoraire ? "erreur-fuseau" : undefined}
+                className={`h-12 w-full rounded-xl border bg-white px-3 text-sm text-[#52635a] outline-none ${erreursChamps.fuseauHoraire ? "border-[#a53d39]" : ""}`}
               >
                 <option value="Africa/Niamey">Africa/Niamey</option>
                 <option value="Africa/Abidjan">Africa/Abidjan</option>
@@ -179,6 +302,7 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                 <option value="Africa/Bamako">Africa/Bamako</option>
                 <option value="Europe/Paris">Europe/Paris</option>
               </select>
+              {erreursChamps.fuseauHoraire && <p id="erreur-fuseau" className="mt-1 text-xs text-[#a53d39]">{erreursChamps.fuseauHoraire}</p>}
             </div>
           </div>
         )}
@@ -195,7 +319,7 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
               ]).map(({ mode, titre, desc }) => (
                 <button
                   key={mode}
-                  onClick={() => setForm({ ...form, mode })}
+                  onClick={() => modifierChamp("mode", mode)}
                   className={`w-full rounded-2xl border-2 p-5 text-left transition ${
                     form.mode === mode ? "border-[#237e56] bg-[#f1f9f2]" : "border-[#e5e4df] bg-white hover:border-[#c5dcc9]"
                   }`}

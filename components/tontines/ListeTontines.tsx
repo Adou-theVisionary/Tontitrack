@@ -46,7 +46,7 @@ export function ListeTontines({
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {tontines.map((tontine) => (
+          {tontines.filter((tontine) => tontine.statut !== "TERMINEE" && tontine.statut !== "ARCHIVEE").map((tontine) => (
             <button
               key={tontine.id}
               onClick={() => onSelectionner(tontine)}
@@ -85,6 +85,22 @@ export function ListeTontines({
             </button>
           ))}
         </div>
+      )}
+
+      {tontines.some((tontine) => tontine.statut === "TERMINEE" || tontine.statut === "ARCHIVEE") && (
+        <section className="space-y-3">
+          <div><p className="text-sm text-muted-foreground">Lecture seule</p><h3 className="text-lg font-semibold text-[#20392d]">Archives</h3></div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {tontines.filter((tontine) => tontine.statut === "TERMINEE" || tontine.statut === "ARCHIVEE").map((tontine) => (
+              <button key={tontine.id} onClick={() => onSelectionner(tontine)} className="rounded-2xl border bg-[#f8faf6] p-5 text-left transition hover:shadow-md">
+                <div className="flex items-start justify-between"><Users size={18} className="text-[#6c8274]" /><BadgeStatut tone={toneStatutTontine(tontine.statut)}>{libelleStatutTontine(tontine.statut)}</BadgeStatut></div>
+                <h4 className="mt-4 font-semibold text-[#20392d]">{tontine.nom}</h4>
+                <p className="mt-1 text-xs text-muted-foreground">{libelleModeTontine(tontine.mode)} · Rapport de clôture consultable</p>
+                <p className="mt-4 text-xs text-[#6f7e75]">{tontine.rotations.filter((rotation) => rotation.statut === "TERMINEE").length} rotation(s) terminée(s)</p>
+              </button>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Search, Users, Check, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BadgeStatut, toneStatutTontine } from "@/components/BadgeStatut";
 import { appelApi } from "@/lib/api-client";
 import { adapterTontineApi, type TontineApi } from "@/lib/tontines/adaptateur-ui";
+import { useRafraichissementActif } from "@/hooks/useRafraichissementActif";
 import {
   formaterMontant, libelleModeTontine, libelleStatutTontine,
   descriptionStatutTontine, formaterDateCourte,
@@ -17,6 +18,7 @@ type Etat = "saisie" | "trouvee" | "demandeEnvoyee" | "erreur";
 type InvitationRecue = { id: string; expireLe: string; tontine: { id: string; nom: string; mode: Tontine["mode"]; montantCotisation: string | number; frequence: Tontine["frequence"] } };
 
 export function RejoindreTontine({ onRetour }: { onRetour: () => void }) {
+  const router = useRouter();
   const parametres = useSearchParams();
   const [code, setCode] = useState("");
   const [etat, setEtat] = useState<Etat>("saisie");
@@ -30,12 +32,13 @@ export function RejoindreTontine({ onRetour }: { onRetour: () => void }) {
   const invitationLienId = parametres.get("invitation");
   const jetonLien = parametres.get("jeton");
 
-  useEffect(() => {
-    void appelApi<InvitationRecue[]>("/api/tontines/invitations/recues")
-      .then(setInvitationsRecues)
-      .catch((erreur: unknown) => setMessage(erreur instanceof Error ? erreur.message : "Impossible de charger les invitations."))
-      .finally(() => setChargementInvitations(false));
+  const chargerInvitations = useCallback(async (silencieux = false) => {
+    try { setInvitationsRecues(await appelApi<InvitationRecue[]>("/api/tontines/invitations/recues")); }
+    catch (erreur: unknown) { if (!silencieux) setMessage(erreur instanceof Error ? erreur.message : "Impossible de charger les invitations."); }
+    finally { if (!silencieux) setChargementInvitations(false); }
   }, []);
+  useEffect(() => { void chargerInvitations(); }, [chargerInvitations]);
+  useRafraichissementActif(() => chargerInvitations(true));
 
   const handleRechercher = async () => {
     if (!code.trim()) return;
@@ -80,12 +83,17 @@ export function RejoindreTontine({ onRetour }: { onRetour: () => void }) {
     setTraitementInvitation(invitationId);
     setMessage("");
     try {
-      await appelApi(`/api/tontines/invitations/${invitationId}/${accepter ? "accepter" : "refuser"}`, {
+      const resultat = await appelApi<{ tontineId: string; statut: "ACCEPTEE" | "REFUSEE" }>(`/api/tontines/invitations/${invitationId}/${accepter ? "accepter" : "refuser"}`, {
         method: "POST",
         body: JSON.stringify(accepter ? { conditionsAcceptees: true, jeton } : { jeton }),
       });
       setInvitationsRecues((invitations) => invitations.filter((invitation) => invitation.id !== invitationId));
-      setMessage(accepter ? "Invitation acceptée. Vous êtes désormais membre." : "Invitation refusée.");
+      if (resultat.statut === "ACCEPTEE") {
+        router.replace(`/tontines/${resultat.tontineId}`);
+        router.refresh();
+        return;
+      }
+      setMessage("Invitation refusée.");
     } catch (erreur) {
       setMessage(erreur instanceof Error ? erreur.message : "Action impossible.");
     } finally {

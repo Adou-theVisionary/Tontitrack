@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Check, CalendarDays, Users, CreditCard, AlertCircle, CheckCircle2 } from "lucide-react";
-import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
+import { appelApi } from "@/lib/api-client";
 import { formaterDateHeure, libelleTypeNotification } from "@/lib/format";
+import { useRafraichissementActif } from "@/hooks/useRafraichissementActif";
 import type { TypeNotification, Notification } from "@/types";
 
 const iconesParType: Record<TypeNotification, typeof Bell> = {
@@ -20,6 +21,9 @@ const iconesParType: Record<TypeNotification, typeof Bell> = {
   NOUVELLE_ROTATION: CalendarDays,
   VERSEMENT_DECLARE: CreditCard,
   CONFIRMATION_RECEPTION: Bell,
+  RECEPTION_PARTIELLE: AlertCircle,
+  VERSEMENT_CONTESTE: AlertCircle,
+  VERSEMENT_REGULARISE: CreditCard,
   TONTINE_DEMARREE: CheckCircle2,
   TONTINE_TERMINEE: CheckCircle2,
 };
@@ -36,22 +40,45 @@ const toneParType: Record<TypeNotification, "green" | "blue" | "amber" | "red" |
   NOUVELLE_ROTATION: "gray",
   VERSEMENT_DECLARE: "blue",
   CONFIRMATION_RECEPTION: "amber",
+  RECEPTION_PARTIELLE: "amber",
+  VERSEMENT_CONTESTE: "red",
+  VERSEMENT_REGULARISE: "blue",
   TONTINE_DEMARREE: "green",
   TONTINE_TERMINEE: "gray",
 };
 
 export function PageNotifications() {
-  const { notifications, marquerNotificationLue, marquerToutesNotificationsLues } = useApp();
   const router = useRouter();
   const [filtre, setFiltre] = useState<"non_lues" | "toutes">("non_lues");
+  const [notifications, setNotifications] = useState<(Notification & { cibleUrl?: string | null })[]>([]);
+
+  const charger = useCallback(async () => {
+    try { setNotifications(await appelApi<(Notification & { cibleUrl?: string | null })[]>("/api/notifications")); }
+    catch { setNotifications([]); }
+  }, []);
+
+  useEffect(() => { void charger(); }, [charger]);
+  useRafraichissementActif(charger);
+
+  const marquerNotificationLue = async (notificationId: string) => {
+    try { await appelApi(`/api/notifications/${notificationId}`, { method: "PATCH" }); }
+    finally { setNotifications((courantes) => courantes.map((notification) => notification.id === notificationId ? { ...notification, lue: true } : notification)); }
+  };
+
+  const marquerToutesNotificationsLues = async () => {
+    try { await appelApi("/api/notifications", { method: "PATCH" }); }
+    finally { setNotifications((courantes) => courantes.map((notification) => ({ ...notification, lue: true }))); }
+  };
 
   const notificationsFiltrees = filtre === "non_lues" ? notifications.filter((n) => !n.lue) : notifications;
   const nonLues = notifications.filter((n) => !n.lue).length;
-  const cheminNotification = (notification: Notification): string | null => {
+  const cheminNotification = (notification: Notification & { cibleUrl?: string | null }): string | null => {
+    if (notification.cibleUrl) return notification.cibleUrl;
     if (!notification.tontineId) return null;
     const onglet = notification.type === "DEMANDE_ADHESION" ? "membres"
       : notification.type === "COTISATION_A_PAYER" || notification.type === "COTISATION_EN_RETARD" || notification.type === "COTISATION_VALIDEE" || notification.type === "COTISATION_REJETEE" ? "cotisations"
-      : notification.type === "VERSEMENT_DECLARE" || notification.type === "CONFIRMATION_RECEPTION" || notification.type === "NOUVELLE_ROTATION" ? "rotations"
+      : notification.type === "VERSEMENT_DECLARE" || notification.type === "CONFIRMATION_RECEPTION" || notification.type === "RECEPTION_PARTIELLE" || notification.type === "VERSEMENT_CONTESTE" || notification.type === "VERSEMENT_REGULARISE" ? "reversements"
+      : notification.type === "NOUVELLE_ROTATION" ? "rotations"
       : notification.type === "INVITATION" ? "invitations"
       : "resume";
     return `/tontines/${notification.tontineId}/${onglet}`;
@@ -107,7 +134,7 @@ export function PageNotifications() {
             return (
               <button
                 key={notif.id}
-                onClick={() => { marquerNotificationLue(notif.id); const chemin = cheminNotification(notif); if (chemin) router.push(chemin); }}
+                onClick={() => { void marquerNotificationLue(notif.id); const chemin = cheminNotification(notif); if (chemin) router.push(chemin); }}
                 className={`flex w-full gap-4 p-5 text-left transition hover:bg-[#fbfcf9] ${!notif.lue ? "bg-[#fcfefb]" : ""}`}
               >
                 <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${toneStyles[tone]}`}>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Copy, Link2, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { appelApi } from "@/lib/api-client";
+import { useRafraichissementActif } from "@/hooks/useRafraichissementActif";
 
 type Invitation = {
   id: string;
@@ -30,21 +31,20 @@ export function GestionInvitations({ tontineId, estCreateur }: { tontineId: stri
   const [message, setMessage] = useState("");
   const [succes, setSucces] = useState("");
 
-  const charger = useCallback(async () => {
+  const charger = useCallback(async (silencieux = false) => {
     if (!estCreateur) return;
-    setChargement(true);
-    setMessage("");
-    setSucces("");
+    if (!silencieux) { setChargement(true); setMessage(""); setSucces(""); }
     try {
       setInvitations(await appelApi<Invitation[]>(`/api/tontines/${tontineId}/invitations`));
     } catch (erreur) {
-      setMessage(erreur instanceof Error ? erreur.message : "Impossible de charger les invitations.");
+      if (!silencieux) setMessage(erreur instanceof Error ? erreur.message : "Impossible de charger les invitations.");
     } finally {
       setChargement(false);
     }
   }, [estCreateur, tontineId]);
 
   useEffect(() => { void charger(); }, [charger]);
+  useRafraichissementActif(() => charger(true), 60_000, estCreateur);
 
   const creer = async () => {
     setChargement(true);

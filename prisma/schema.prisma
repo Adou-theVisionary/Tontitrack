@@ -159,6 +159,9 @@ enum TypeNotification {
   NOUVELLE_ROTATION
   VERSEMENT_DECLARE
   CONFIRMATION_RECEPTION
+  RECEPTION_PARTIELLE
+  VERSEMENT_CONTESTE
+  VERSEMENT_REGULARISE
   TONTINE_DEMARREE
   TONTINE_TERMINEE
 }
@@ -211,6 +214,7 @@ model Utilisateur {
   declarationsVersement DeclarationVersement[]    @relation("VersementsDeclares")
   preuvesVersement      PreuveVersement[]         @relation("PreuvesVersementCreees")
   confirmationsReception ConfirmationReception[]  @relation("ConfirmationsReceptionBeneficiaire")
+  evenementsReversement EvenementReversement[]    @relation("EvenementsReversementActeur")
   notifications         Notification[]
   evenementsAudit       EvenementAudit[]          @relation("ActeurAudit")
   operations            OperationSynchronisation[]
@@ -380,7 +384,27 @@ model Tontine {
   demandesAdhesion       DemandeAdhesion[]
   ordresBeneficiaires    OrdreBeneficiaire[]
   rotations              Rotation[]
+  cotisations            Cotisation[]
+  reversements           DeclarationVersement[]
+  rapportCloture         RapportClotureTontine?
   @@index([createurId, statut])
+}
+
+/// Instantané immuable produit seulement après tous les contrôles de clôture.
+model RapportClotureTontine {
+  id                            String   @id @default(cuid())
+  tontineId                     String   @unique
+  creeParId                     String
+  clotureeLe                    DateTime
+  montantCotisationsAttendu     Decimal  @db.Decimal(18, 2)
+  montantCotisationsConfirme    Decimal  @db.Decimal(18, 2)
+  montantPenalitesAppliquees    Decimal  @db.Decimal(18, 2)
+  montantReversementsConfirmes  Decimal  @db.Decimal(18, 2)
+  nombreRotations               Int
+  donnees                       Json
+  creeLe                        DateTime @default(now())
+  tontine                       Tontine  @relation(fields: [tontineId], references: [id], onDelete: Cascade)
+  @@index([clotureeLe])
 }
 
 model MembreTontine {
@@ -473,43 +497,56 @@ model Rotation {
   beneficiaire         MembreTontine          @relation("BeneficiaireRotation", fields: [beneficiaireId], references: [id])
   cotisations          Cotisation[]
   versements           DeclarationVersement[]
-  confirmationReception ConfirmationReception?
+  confirmationsReception ConfirmationReception[]
   @@unique([tontineId, numero])
   @@index([tontineId, statut])
   @@index([beneficiaireId])
 }
 
 model Cotisation {
-  id             String              @id @default(cuid())
-  rotationId     String
-  membreId       String
-  montantAttendu Decimal             @db.Decimal(18, 2)
-  montantValide  Decimal             @default(0) @db.Decimal(18, 2)
-  statut         StatutCotisation    @default(A_PAYER)
-  creeLe         DateTime            @default(now())
-  modifieLe      DateTime            @updatedAt
-  rotation       Rotation            @relation(fields: [rotationId], references: [id], onDelete: Cascade)
-  membre         MembreTontine       @relation(fields: [membreId], references: [id])
-  declarations   DeclarationCotisation[]
+  id                        String              @id @default(cuid())
+  tontineId                 String
+  rotationId                String
+  membreId                  String
+  montantAttendu            Decimal             @db.Decimal(18, 2)
+  montantDeclare            Decimal             @default(0) @db.Decimal(18, 2)
+  montantValide             Decimal             @default(0) @db.Decimal(18, 2)
+  echeanceLe                DateTime
+  statut                    StatutCotisation    @default(A_PAYER)
+  penaliteAppliqueeMontant  Decimal             @default(0) @db.Decimal(18, 2)
+  penaliteAppliqueeLe       DateTime?
+  rappelAvantEcheanceEnvoyeLe DateTime?
+  rappelRetardEnvoyeLe      DateTime?
+  creeLe                    DateTime            @default(now())
+  modifieLe                 DateTime            @updatedAt
+  rotation                  Rotation            @relation(fields: [rotationId], references: [id], onDelete: Cascade)
+  tontine                   Tontine             @relation(fields: [tontineId], references: [id], onDelete: Cascade)
+  membre                    MembreTontine       @relation(fields: [membreId], references: [id])
+  declarations              DeclarationCotisation[]
   @@unique([rotationId, membreId])
+  @@index([tontineId, statut])
   @@index([membreId, statut])
 }
 
 model DeclarationCotisation {
-  id             String              @id @default(cuid())
-  cotisationId   String
-  declarantId    String
-  montant        Decimal             @db.Decimal(18, 2)
-  statut         StatutDeclaration   @default(EN_ATTENTE_VALIDATION)
-  motifRejet     String?
-  decideParId    String?
-  declareLe      DateTime            @default(now())
-  decideLe       DateTime?
-  version        Int                 @default(1)
-  cotisation     Cotisation          @relation(fields: [cotisationId], references: [id], onDelete: Cascade)
-  declarant      Utilisateur         @relation("DeclarationsCotisation", fields: [declarantId], references: [id])
-  decidePar      Utilisateur?        @relation("DecisionsCotisation", fields: [decideParId], references: [id])
-  preuves        PreuveCotisation[]
+  id                   String              @id @default(cuid())
+  cotisationId         String
+  declarantId          String
+  montant              Decimal             @db.Decimal(18, 2)
+  verseLe              DateTime
+  referenceVersement   String?
+  moyenVersement       String?
+  statut               StatutDeclaration   @default(EN_ATTENTE_VALIDATION)
+  motifRejet           String?
+  observationDecision  String?
+  decideParId          String?
+  declareLe            DateTime            @default(now())
+  decideLe             DateTime?
+  version              Int                 @default(1)
+  cotisation           Cotisation          @relation(fields: [cotisationId], references: [id], onDelete: Cascade)
+  declarant            Utilisateur         @relation("DeclarationsCotisation", fields: [declarantId], references: [id])
+  decidePar            Utilisateur?        @relation("DecisionsCotisation", fields: [decideParId], references: [id])
+  preuves              PreuveCotisation[]
   @@index([cotisationId, statut])
 }
 
@@ -528,17 +565,28 @@ model PreuveCotisation {
 
 model DeclarationVersement {
   id             String             @id @default(cuid())
+  tontineId      String
   rotationId     String
   declarantId    String
   montant        Decimal            @db.Decimal(18, 2)
+  montantConfirme Decimal            @default(0) @db.Decimal(18, 2)
+  verseLe        DateTime
+  referenceVersement String?
+  moyenVersement String?
+  observation    String?
   statut         StatutVersement    @default(DECLARE)
   contesteLe     DateTime?
   motifContestation String?
   declareLe      DateTime           @default(now())
   confirmeLe     DateTime?
+  version        Int                @default(1)
+  tontine        Tontine            @relation(fields: [tontineId], references: [id], onDelete: Cascade)
   rotation       Rotation           @relation(fields: [rotationId], references: [id], onDelete: Cascade)
   declarant      Utilisateur        @relation("VersementsDeclares", fields: [declarantId], references: [id])
   preuves        PreuveVersement[]
+  confirmationReception ConfirmationReception?
+  evenements     EvenementReversement[]
+  @@index([tontineId, statut])
   @@index([rotationId, statut])
 }
 
@@ -557,15 +605,34 @@ model PreuveVersement {
 
 model ConfirmationReception {
   id             String                    @id @default(cuid())
-  rotationId     String                    @unique
+  rotationId     String
+  declarationId  String                    @unique
   beneficiaireId String
+  montantConfirme Decimal                  @default(0) @db.Decimal(18, 2)
   statut         StatutConfirmationReception @default(EN_ATTENTE)
-  expireLe       DateTime
+  motifContestation String?
+  observation    String?
+  expireLe       DateTime?
   confirmeLe     DateTime?
   creeLe         DateTime                  @default(now())
   rotation       Rotation                  @relation(fields: [rotationId], references: [id], onDelete: Cascade)
+  declaration    DeclarationVersement      @relation(fields: [declarationId], references: [id], onDelete: Cascade)
   beneficiaire   Utilisateur               @relation("ConfirmationsReceptionBeneficiaire", fields: [beneficiaireId], references: [id])
+  @@index([rotationId, statut])
   @@index([beneficiaireId, statut])
+}
+
+model EvenementReversement {
+  id             String                @id @default(cuid())
+  declarationId  String
+  acteurId       String?
+  type           String
+  donnees        Json?
+  creeLe         DateTime              @default(now())
+  declaration    DeclarationVersement  @relation(fields: [declarationId], references: [id], onDelete: Cascade)
+  acteur         Utilisateur?          @relation("EvenementsReversementActeur", fields: [acteurId], references: [id], onDelete: SetNull)
+  @@index([declarationId, creeLe])
+  @@index([acteurId, creeLe])
 }
 
 model Notification {

@@ -1,9 +1,9 @@
-import type { ReponseApi } from "@/types";
+import type { DetailErreurApi, ReponseApi } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export class ErreurApi extends Error {
-  constructor(public code: string, message: string) {
+  constructor(public code: string, message: string, public details: DetailErreurApi[] = []) {
     super(message);
     this.name = "ErreurApi";
   }
@@ -13,10 +13,11 @@ export async function appelApi<T>(
   chemin: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const corpsFormulaire = options.body instanceof FormData;
   const response = await fetch(`${API_URL}${chemin}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(corpsFormulaire ? {} : { "Content-Type": "application/json" }),
       ...options.headers,
     },
   });
@@ -26,7 +27,8 @@ export async function appelApi<T>(
   if (!response.ok || corps.erreur) {
     throw new ErreurApi(
       corps.erreur?.code || "ERREUR_INCONNUE",
-      corps.erreur?.message || "Une erreur est survenue."
+      corps.erreur?.message || "Une erreur est survenue.",
+      corps.erreur?.details || []
     );
   }
 

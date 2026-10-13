@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { appelApi } from "@/lib/api-client";
+import { useRafraichissementActif } from "@/hooks/useRafraichissementActif";
 
 type MembreApi = { id: string; role: "CREATEUR" | "MEMBRE"; statut: string; rejointLe: string; utilisateur: { profil: { prenom: string; nom: string } | null } };
 type DemandeApi = { id: string; statut: "EN_ATTENTE" | "APPROUVEE" | "REFUSEE" | "ANNULEE"; motif: string | null; creeLe: string; decideLe: string | null; demandeur: { profil: { prenom: string; nom: string } | null } };
@@ -15,21 +16,21 @@ export function GestionMembresDemandes({ tontineId, estCreateur, onActualiser }:
   const [mutation, setMutation] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
-  const charger = useCallback(async () => {
-    setChargement(true);
-    setMessage("");
+  const charger = useCallback(async (silencieux = false) => {
+    if (!silencieux) { setChargement(true); setMessage(""); }
     try {
       const membresCharges = await appelApi<MembreApi[]>(`/api/tontines/${tontineId}/membres`);
       setMembres(membresCharges);
       setDemandes(estCreateur ? await appelApi<DemandeApi[]>(`/api/tontines/${tontineId}/demandes`) : []);
     } catch (erreur) {
-      setMessage(erreur instanceof Error ? erreur.message : "Impossible de charger les membres.");
+      if (!silencieux) setMessage(erreur instanceof Error ? erreur.message : "Impossible de charger les membres.");
     } finally {
       setChargement(false);
     }
   }, [estCreateur, tontineId]);
 
   useEffect(() => { void charger(); }, [charger]);
+  useRafraichissementActif(() => charger(true));
 
   const decider = async (demandeId: string, approuver: boolean) => {
     setMutation(demandeId);

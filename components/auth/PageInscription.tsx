@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, AlertCircle } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
+import { destinationRetourAutorisee } from "@/lib/navigation/retour";
 
 export function PageInscription() {
   const router = useRouter();
+  const parametres = useSearchParams();
+  const retour = destinationRetourAutorisee(parametres.get("retour"));
   const [form, setForm] = useState({
     prenom: "", nom: "", email: "", telephone: "", motDePasse: "", confirmationMotDePasse: "",
   });
@@ -37,7 +40,7 @@ export function PageInscription() {
       const reponse = await fetch("/api/auth/inscription", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const corps = await reponse.json();
       if (!reponse.ok) throw new Error(corps.erreur?.message);
-      router.push("/connexion?inscription=ok");
+      router.push(`/connexion?inscription=ok&retour=${encodeURIComponent(retour)}`);
     } catch (erreur) {
       setErreurs({ general: erreur instanceof Error && erreur.message ? erreur.message : "Une erreur est survenue lors de l'inscription." });
     } finally {
@@ -161,7 +164,7 @@ export function PageInscription() {
         </div>
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Déjà un compte ?{" "}
-          <button onClick={() => router.push("/connexion")} className="font-semibold text-[#237e56] hover:underline">
+          <button onClick={() => router.push(`/connexion?retour=${encodeURIComponent(retour)}`)} className="font-semibold text-[#237e56] hover:underline">
             Se connecter
           </button>
         </p>

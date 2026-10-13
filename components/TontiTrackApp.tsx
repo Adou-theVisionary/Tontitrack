@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Image from 'next/image';
 import {
   ArrowDownLeft, ArrowUpRight, Bell, BookOpen, CalendarDays, Check,
   ChevronDown, CircleHelp, CreditCard, FileText, Home, Landmark, LayoutGrid,
@@ -36,7 +37,7 @@ const money = (value: number) => `${new Intl.NumberFormat('fr-FR').format(value)
 function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`flex items-center ${compact ? 'justify-center' : 'gap-2'}`}>
-      <img src="/images/logo.png" alt="TontiTrack" className={compact ? 'h-9 w-9 object-contain' : 'h-12 w-40 object-contain'} />
+      <Image src="/images/logo.png" alt="TontiTrack" width={160} height={48} className={compact ? 'h-9 w-9 object-contain' : 'h-12 w-40 object-contain'} />
       {!compact && <span className="sr-only">TontiTrack</span>}
     </div>
   );

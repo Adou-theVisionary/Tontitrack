@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   ArrowLeft, MoreHorizontal, CalendarDays, Users, Check, Copy,
-  CreditCard, Upload, X, FileText,
+  CreditCard, X, FileText,
   AlertCircle, Clock, Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,21 +11,27 @@ import { BadgeStatut, toneStatutTontine, toneStatutCotisation, toneStatutDeclara
 import { ModalConfirmation } from "@/components/ModalConfirmation";
 import { ModalDeclarationCotisation } from "@/components/tontines/ModalDeclarationCotisation";
 import { ModalRejetCotisation } from "@/components/tontines/ModalRejetCotisation";
-import { ModalVersement } from "@/components/tontines/ModalVersement";
 import { GestionInvitations } from "@/components/tontines/GestionInvitations";
 import { GestionMembresDemandes } from "@/components/tontines/GestionMembresDemandes";
 import { AdministrationTontine } from "@/components/tontines/AdministrationTontine";
+import { DemarrageTontine } from "@/components/tontines/DemarrageTontine";
+import { OrdreBeneficiaires } from "@/components/tontines/OrdreBeneficiaires";
+import { CotisationsTontine } from "@/components/tontines/CotisationsTontine";
+import { ApercuCotisationsTontine } from "@/components/tontines/ApercuCotisationsTontine";
+import { ReversementsTontine } from "@/components/tontines/ReversementsTontine";
+import { ClotureTontine } from "@/components/tontines/ClotureTontine";
 import { useApp } from "@/contexts/AppContext";
 import { tontiTrackService } from "@/services/tontitrack-service";
 import {
   formaterMontant, formaterDate, formaterDateCourte, libelleModeTontine,
   libelleStatutTontine, descriptionStatutTontine, libelleStatutCotisation,
   libelleStatutDeclaration,
+  libelleStatutRotation,
   calculerResteAPayer, calculerPourcentage, calculerNombreTours,
 } from "@/lib/format";
 import type { Tontine } from "@/types";
 
-export type OngletTontine = "resume" | "rotations" | "cotisations" | "membres" | "invitations" | "historique";
+export type OngletTontine = "resume" | "rotations" | "cotisations" | "reversements" | "cloture" | "membres" | "invitations" | "historique";
 
 export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ongletInitial = "resume", onChangerOnglet }: { tontine: Tontine; onRetour: () => void; onMutation: (tontine: Tontine) => void; onActualiser?: () => Promise<void>; ongletInitial?: OngletTontine; onChangerOnglet?: (onglet: OngletTontine) => void }) {
   const { remplacerTontine } = useApp();
@@ -34,14 +40,13 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
   const [showAnnuler, setShowAnnuler] = useState(false);
   const [showDeclaration, setShowDeclaration] = useState<string | null>(null);
   const [showRejet, setShowRejet] = useState<string | null>(null);
-  const [showVersement, setShowVersement] = useState<string | null>(null);
-  const [showDeclarationVersement, setShowDeclarationVersement] = useState<string | null>(null);
   const [toast, setToast] = useState("");
 
   useEffect(() => { setOnglet(ongletInitial); }, [ongletInitial]);
 
   const estCreateur = tontine.estCreateur;
   const rotationEnCours = tontine.rotations.find((r) => r.statut === "EN_COURS");
+  const prochainTour = tontine.rotations.find((r) => r.statut === "A_VENIR");
   const nombreTours = calculerNombreTours(tontine.mode, tontine.nombreMembresApprouves);
 
   const showToast = (msg: string) => {
@@ -86,6 +91,8 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
     { id: "resume", label: "Résumé" },
     { id: "rotations", label: "Rotations" },
     { id: "cotisations", label: "Cotisations" },
+    { id: "reversements", label: "Reversements" },
+    { id: "cloture", label: "Clôture" },
     { id: "membres", label: "Membres" },
     { id: "invitations", label: "Invitations" },
     { id: "historique", label: "Historique" },
@@ -111,6 +118,7 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
               {libelleModeTontine(tontine.mode)} · {formaterMontant(tontine.montantCotisation, tontine.devise)} / mois
             </p>
             <p className="mt-2 text-xs text-[#98a099]">{descriptionStatutTontine(tontine.statut)}</p>
+            {tontine.demarreeLe && <p className="mt-2 text-xs text-[#6c8274]">Démarrage effectif : {formaterDate(tontine.demarreeLe)}</p>}
           </div>
           {estCreateur && (
             <div className="relative">
@@ -172,6 +180,8 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
       {/* Onglet Résumé */}
       {onglet === "resume" && (
         <div className="space-y-6">
+          {estCreateur && (tontine.statut === "EN_PREPARATION" || tontine.statut === "PRETE_A_DEMARRER" || tontine.statut === "ACTIVE") && <DemarrageTontine tontine={tontine} onActualiser={actualiserTontine} />}
+          {tontine.statut === "ACTIVE" && <ApercuCotisationsTontine tontineId={tontine.id} estCreateur={estCreateur} prochainTour={prochainTour} allerCotisations={() => { setOnglet("cotisations"); onChangerOnglet?.("cotisations"); }} allerMembres={() => { setOnglet("membres"); onChangerOnglet?.("membres"); }} allerRotations={() => { setOnglet("rotations"); onChangerOnglet?.("rotations"); }} />}
           {rotationEnCours && (
             <div className="rounded-2xl border bg-white p-5">
               <h4 className="font-semibold text-[#20392d]">Rotation en cours — Tour {rotationEnCours.numero}</h4>
@@ -182,11 +192,9 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
                   <p className="mt-1 text-xs text-[#6c8274]">{formaterDate(rotationEnCours.date)}</p>
                 </div>
                 <div className="rounded-xl bg-[#f8faf6] p-4">
-                  <p className="text-xs text-muted-foreground">Montant collecté</p>
-                  <p className="mt-2 font-semibold text-[#294237]">{formaterMontant(rotationEnCours.montantCollecte)} / {formaterMontant(rotationEnCours.montantAttendu)}</p>
-                  <div className="mt-2 h-2 rounded-full bg-[#e2ebe3]">
-                    <div className="h-full rounded-full bg-[#399867]" style={{ width: `${calculerPourcentage(rotationEnCours.montantCollecte, rotationEnCours.montantAttendu)}%` }} />
-                  </div>
+                  <p className="text-xs text-muted-foreground">Montant théorique du tour</p>
+                  <p className="mt-2 font-semibold text-[#294237]">{formaterMontant(rotationEnCours.montantAttendu)}</p>
+                  <p className="mt-1 text-xs text-[#6c8274]">Aucune cotisation ni aucun reversement n&apos;est enregistré ici.</p>
                 </div>
               </div>
             </div>
@@ -211,18 +219,6 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
                       </p>
                     </div>
                     <BadgeStatut tone={toneStatutCotisation(cot.statut)} dot={false}>{libelleStatutCotisation(cot.statut)}</BadgeStatut>
-                  </div>
-                ))}
-                {tontine.versements.filter((v) => v.statut === "DECLARE").map((v) => (
-                  <div key={v.id} className="flex items-center gap-3 rounded-xl bg-white p-3">
-                    <span className="grid h-8 w-8 place-items-center rounded-full bg-[#e8f2f8] text-[#24698a]"><Check size={15} /></span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-[#405247]">Versement à confirmer</p>
-                      <p className="text-xs text-muted-foreground">{formaterMontant(v.montant)} · Reste {v.tempsRestantConfirmation}</p>
-                    </div>
-                    <Button onClick={() => setShowVersement(v.id)} variant="outline" className="border-[#c5dcc9] text-[#237e56] text-xs">
-                      Confirmer
-                    </Button>
                   </div>
                 ))}
               </div>
@@ -285,6 +281,7 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
       {/* Onglet Rotations */}
       {onglet === "rotations" && (
         <div className="space-y-4">
+          {(estCreateur || tontine.membres.length > 0) && <OrdreBeneficiaires tontine={tontine} estCreateur={estCreateur} onActualiser={actualiserTontine} />}
           {tontine.rotations.length === 0 ? (
             <div className="rounded-2xl border bg-white p-8 text-center">
               <CalendarDays size={32} className="mx-auto text-[#9bc8aa]" />
@@ -309,23 +306,12 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
                       <div className="flex items-center justify-between">
                         <p className="font-semibold text-[#20392d]">Tour {rotation.numero}</p>
                         <BadgeStatut tone={rotation.statut === "TERMINEE" ? "green" : rotation.statut === "EN_COURS" ? "amber" : "gray"} dot={false}>
-                          {rotation.statut === "TERMINEE" ? "Terminé" : rotation.statut === "EN_COURS" ? "En cours" : "À venir"}
+                          {libelleStatutRotation(rotation.statut)}
                         </BadgeStatut>
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">Bénéficiaire : {rotation.beneficiaireNom}</p>
-                      <p className="text-xs text-muted-foreground">{formaterDate(rotation.date)}</p>
-                      <div className="mt-3 flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">{formaterMontant(rotation.montantCollecte)} / {formaterMontant(rotation.montantAttendu)}</span>
-                        <span className="font-semibold text-[#287b54]">{Math.round(calculerPourcentage(rotation.montantCollecte, rotation.montantAttendu))}%</span>
-                      </div>
-                      <div className="mt-2 h-1.5 rounded-full bg-[#edf0ea]">
-                        <div className="h-full rounded-full bg-[#5eb783]" style={{ width: `${calculerPourcentage(rotation.montantCollecte, rotation.montantAttendu)}%` }} />
-                      </div>
-                      {estCreateur && tontine.statut === "ACTIVE" && rotation.statut === "EN_COURS" && (
-                        <Button onClick={() => setShowDeclarationVersement(rotation.id)} variant="outline" className="mt-4 border-[#c5dcc9] text-[#237e56] text-xs">
-                          <Upload size={14} /> Déclarer le versement
-                        </Button>
-                      )}
+                      <p className="text-xs text-muted-foreground">Début prévu : {formaterDate(rotation.date)}</p>
+                      <p className="mt-3 text-xs text-muted-foreground">Montant théorique : {formaterMontant(rotation.montantAttendu)}</p>
                     </div>
                   </div>
                 </div>
@@ -337,85 +323,20 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
 
       {/* Onglet Cotisations */}
       {onglet === "cotisations" && (
-        <div className="space-y-4">
-          {tontine.cotisations.length === 0 ? (
-            <div className="rounded-2xl border bg-white p-8 text-center">
-              <CreditCard size={32} className="mx-auto text-[#9bc8aa]" />
-              <p className="mt-3 text-sm font-medium text-[#405247]">Aucune cotisation pour le moment.</p>
-            </div>
-          ) : (
-            <>
-              <p className="text-sm text-muted-foreground">
-                {tontine.rotations.find((r) => r.statut === "EN_COURS")
-                  ? `Cotisations du tour ${tontine.rotations.find((r) => r.statut === "EN_COURS")?.numero}`
-                  : "Aucune rotation active"}
-              </p>
-              <div className="space-y-3">
-                {tontine.cotisations.map((cot) => {
-                  const reste = calculerResteAPayer(cot.montantAttendu, cot.montantValide);
-                  const pct = calculerPourcentage(cot.montantValide, cot.montantAttendu);
-                  return (
-                    <div key={cot.id} className="rounded-2xl border bg-white p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="grid h-9 w-9 place-items-center rounded-full bg-[#f0f3ed] text-xs font-bold text-[#657169]">
-                            {cot.membreNom.split(" ").map(n => n[0]).join("")}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-[#405247]">{cot.membreNom}</p>
-                            {cot.statut === "NON_CONCERNE" ? (
-                              <p className="text-xs text-muted-foreground">Bénéficiaire exempté</p>
-                            ) : (
-                              <p className="text-xs text-muted-foreground">
-                                {formaterMontant(cot.montantValide)} / {formaterMontant(cot.montantAttendu)}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <BadgeStatut tone={toneStatutCotisation(cot.statut)} dot={false}>
-                          {libelleStatutCotisation(cot.statut)}
-                        </BadgeStatut>
-                      </div>
-                      {cot.statut !== "NON_CONCERNE" && cot.statut !== "PAYEE" && (
-                        <div className="mt-3">
-                          <div className="h-1.5 rounded-full bg-[#edf0ea]">
-                            <div className={`h-full rounded-full ${cot.statut === "EN_RETARD" ? "bg-[#c54842]" : "bg-[#dca83e]"}`} style={{ width: `${pct}%` }} />
-                          </div>
-                          {reste > 0 && (
-                            <p className="mt-2 text-xs text-muted-foreground">Reste : {formaterMontant(reste)}</p>
-                          )}
-                        </div>
-                      )}
-                      {/* Déclarations */}
-                      {estCreateur && cot.statut !== "NON_CONCERNE" && cot.statut !== "PAYEE" && (
-                        <div className="mt-3 flex gap-2">
-                          {tontine.declarations.filter((d) => d.cotisationId === cot.id && d.statut === "EN_ATTENTE").length > 0 ? (
-                            <>
-                              <Button onClick={() => {
-                                const declaration = tontine.declarations.find((item) => item.cotisationId === cot.id && item.statut === "EN_ATTENTE");
-                                if (declaration) void executerMutation(() => tontiTrackService.validerCotisation(declaration.id), "Cotisation validée");
-                              }} variant="outline" className="flex-1 border-[#c5dcc9] text-[#237e56] text-xs">
-                                <Check size={14} /> Valider
-                              </Button>
-                              <Button onClick={() => {
-                                const declaration = tontine.declarations.find((item) => item.cotisationId === cot.id && item.statut === "EN_ATTENTE");
-                                if (declaration) setShowRejet(declaration.id);
-                              }} variant="outline" className="flex-1 border-[#f0d5d4] text-[#a53d39] text-xs">
-                                <X size={14} /> Rejeter
-                              </Button>
-                            </>
-                          ) : (
-                            <p className="text-xs text-muted-foreground">Aucune déclaration en attente</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
+        <CotisationsTontine tontineId={tontine.id} estCreateur={estCreateur} />
+      )}
+
+      {onglet === "reversements" && (
+        <ReversementsTontine tontineId={tontine.id} />
+      )}
+
+      {onglet === "cloture" && (
+        <ClotureTontine
+          tontineId={tontine.id}
+          onActualiser={actualiserTontine}
+          versCotisations={() => { setOnglet("cotisations"); onChangerOnglet?.("cotisations"); }}
+          versReversements={() => { setOnglet("reversements"); onChangerOnglet?.("reversements"); }}
+        />
       )}
 
       {/* Onglet Membres */}
@@ -488,24 +409,6 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
         <ModalRejetCotisation
           onClose={() => setShowRejet(null)}
           onConfirm={(motif) => { void executerMutation(() => tontiTrackService.rejeterCotisation(showRejet, motif), "Cotisation rejetée").then(() => setShowRejet(null)); }}
-        />
-      )}
-      {showVersement && (
-        <ModalVersement
-          versementId={showVersement}
-          mode="confirmation"
-          onClose={() => setShowVersement(null)}
-          onConfirm={() => { void actualiserTontine(); setShowVersement(null); showToast("Réception confirmée"); }}
-          onContester={() => { void actualiserTontine(); setShowVersement(null); showToast("Litige signalé"); }}
-        />
-      )}
-      {showDeclarationVersement && (
-        <ModalVersement
-          rotationId={showDeclarationVersement}
-          mode="declaration"
-          onClose={() => setShowDeclarationVersement(null)}
-          onConfirm={() => { void actualiserTontine(); setShowDeclarationVersement(null); showToast("Versement déclaré"); }}
-          onContester={() => undefined}
         />
       )}
       {toast && (

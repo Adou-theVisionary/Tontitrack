@@ -24,6 +24,8 @@ export type StatutDeclaration = "EN_ATTENTE" | "VALIDEE" | "REJETEE";
 
 export type StatutVersement = "DECLARE" | "CONFIRME" | "NON_RECU" | "LITIGE" | "CONFIRMEE_AUTOMATIQUEMENT";
 
+export type StatutRotation = "A_VENIR" | "EN_ATTENTE" | "EN_COURS" | "EN_ATTENTE_VERSEMENT" | "EN_ATTENTE_CONFIRMATION" | "TERMINEE" | "EN_RETARD" | "LITIGE" | "ANNULEE";
+
 export type StatutSynchronisation = "EN_ATTENTE" | "EN_COURS" | "SYNCHRONISEE" | "ERREUR" | "CONFLIT";
 
 export type StatutIdentite = "NON_FOURNI" | "EN_ATTENTE" | "VALIDE" | "REJETE";
@@ -46,6 +48,9 @@ export type TypeNotification =
   | "NOUVELLE_ROTATION"
   | "VERSEMENT_DECLARE"
   | "CONFIRMATION_RECEPTION"
+  | "RECEPTION_PARTIELLE"
+  | "VERSEMENT_CONTESTE"
+  | "VERSEMENT_REGULARISE"
   | "TONTINE_DEMARREE"
   | "TONTINE_TERMINEE";
 
@@ -122,7 +127,7 @@ export interface Rotation {
   date: string;
   montantAttendu: number;
   montantCollecte: number;
-  statut: "EN_ATTENTE" | "EN_COURS" | "TERMINEE";
+  statut: StatutRotation;
 }
 
 export interface DeclarationCotisation {
@@ -171,6 +176,10 @@ export interface Tontine {
   monStatutMembre?: "APPROUVE" | "EN_ATTENTE" | "REFUSE";
   visibilite?: "PUBLIQUE" | "PRIVEE";
   adhesionsFermees?: boolean;
+  modeDemarrage?: "MANUEL" | "AUTOMATIQUE";
+  methodeOrdre?: "MANUEL" | "ALEATOIRE";
+  demarreeLe?: string | null;
+  reglesVerrouilleesLe?: string | null;
 }
 
 export interface Notification {
@@ -194,11 +203,17 @@ export interface OperationSynchronisation {
   creeLe: string;
 }
 
+export interface DetailErreurApi {
+  champ: string;
+  message: string;
+}
+
 export interface ReponseApi<T> {
   donnees: T;
   message?: string;
   erreur?: {
     code: string;
     message: string;
+    details?: DetailErreurApi[];
   };
 }

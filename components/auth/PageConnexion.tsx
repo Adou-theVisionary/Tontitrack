@@ -1,15 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Check, AlertCircle } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
+import { destinationRetourAutorisee } from "@/lib/navigation/retour";
 
 export function PageConnexion() {
   const { connecterUtilisateur } = useApp();
   const router = useRouter();
+  const parametres = useSearchParams();
+  const retour = destinationRetourAutorisee(parametres.get("retour"));
   const [email, setEmail] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
   const [montrerMotDePasse, setMontrerMotDePasse] = useState(false);
@@ -25,7 +29,7 @@ export function PageConnexion() {
       const corps = await reponse.json();
       if (!reponse.ok) throw new Error(corps.erreur?.message);
       connecterUtilisateur({ ...corps.donnees.utilisateur, dateInscription: "" });
-      router.push("/tableau-de-bord");
+      router.replace(retour);
     } catch (erreur) {
       setErreur(erreur instanceof Error && erreur.message ? erreur.message : "Email ou mot de passe incorrect.");
     } finally {
@@ -41,7 +45,7 @@ export function PageConnexion() {
         <div className="absolute -bottom-32 -left-10 h-80 w-80 rounded-full border-[24px] border-white/5" />
         <div className="relative">
           <div className="inline-flex rounded-xl bg-white p-3">
-            <img src="/images/logo.png" alt="TontiTrack" className="h-12 w-44 object-contain" />
+            <Image src="/images/logo.png" alt="TontiTrack" width={176} height={48} className="h-12 w-44 object-contain" />
           </div>
         </div>
         <div className="relative">
@@ -127,7 +131,7 @@ export function PageConnexion() {
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
             Pas encore de compte ?{" "}
-            <button onClick={() => router.push("/inscription")} className="font-semibold text-[#237e56] hover:underline">
+            <button onClick={() => router.push(`/inscription?retour=${encodeURIComponent(retour)}`)} className="font-semibold text-[#237e56] hover:underline">
               Créer un compte
             </button>
           </p>

@@ -11,6 +11,7 @@ import type {
   FrequenceTontine,
   TypeNotification,
   TypeDocument,
+  StatutRotation,
 } from "@/types";
 
 export function formaterMontant(montant: number, devise = "XOF"): string {
@@ -118,6 +119,20 @@ export function libelleStatutVersement(statut: StatutVersement): string {
   }
 }
 
+export function libelleStatutRotation(statut: StatutRotation): string {
+  switch (statut) {
+    case "A_VENIR": return "À venir";
+    case "EN_ATTENTE": return "En attente";
+    case "EN_COURS": return "En cours";
+    case "EN_ATTENTE_VERSEMENT": return "En attente de versement";
+    case "EN_ATTENTE_CONFIRMATION": return "En attente de confirmation";
+    case "TERMINEE": return "Terminée";
+    case "EN_RETARD": return "En retard";
+    case "LITIGE": return "En litige";
+    case "ANNULEE": return "Annulée";
+  }
+}
+
 export function libelleStatutIdentite(statut: StatutIdentite): string {
   switch (statut) {
     case "NON_FOURNI": return "Non fourni";
@@ -171,6 +186,9 @@ export function libelleTypeNotification(type: TypeNotification): string {
     case "NOUVELLE_ROTATION": return "Nouvelle rotation";
     case "VERSEMENT_DECLARE": return "Versement déclaré";
     case "CONFIRMATION_RECEPTION": return "Confirmation de réception";
+    case "RECEPTION_PARTIELLE": return "Réception partielle";
+    case "VERSEMENT_CONTESTE": return "Versement contesté";
+    case "VERSEMENT_REGULARISE": return "Versement régularisé";
     case "TONTINE_DEMARREE": return "Tontine démarrée";
     case "TONTINE_TERMINEE": return "Tontine terminée";
     default: return type;
