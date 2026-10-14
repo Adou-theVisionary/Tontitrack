@@ -38,13 +38,13 @@ export function PageConnexion() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f8f7f2] lg:grid lg:grid-cols-2">
+    <div className="flex min-h-screen flex-col bg-background lg:grid lg:grid-cols-2">
       {/* Panneau gauche desktop */}
       <div className="relative hidden overflow-hidden bg-[#237e56] p-12 lg:flex lg:flex-col lg:justify-between">
         <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full border-[30px] border-white/10" />
         <div className="absolute -bottom-32 -left-10 h-80 w-80 rounded-full border-[24px] border-white/5" />
         <div className="relative">
-          <div className="inline-flex rounded-xl bg-white p-3">
+          <div className="brand-logo-surface inline-flex rounded-xl bg-white p-3">
             <Image src="/images/logo.png" alt="TontiTrack" width={176} height={48} className="h-12 w-44 object-contain" />
           </div>
         </div>
@@ -71,67 +71,67 @@ export function PageConnexion() {
       <div className="flex flex-1 flex-col justify-center px-6 py-10 sm:px-12 lg:px-20">
         <div className="mx-auto w-full max-w-sm">
           <div className="lg:hidden"><Logo /></div>
-          <h1 className="mt-8 text-2xl font-semibold text-[#20392d] lg:mt-0">Bienvenue sur TontiTrack</h1>
+          <h1 className="mt-8 text-2xl font-semibold text-foreground lg:mt-0">Bienvenue sur TontiTrack</h1>
           <p className="mt-2 text-sm text-muted-foreground">Connectez-vous pour accéder à votre espace.</p>
 
           {erreur && (
-            <div className="mt-5 flex items-center gap-2 rounded-xl bg-[#fdebea] px-4 py-3 text-sm text-[#a53d39]">
+            <div className="mt-5 flex items-center gap-2 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
               <AlertCircle size={16} /> {erreur}
             </div>
           )}
 
           <form onSubmit={handleConnexion} className="mt-6 space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-[#405247]">Email</label>
+              <label className="mb-2 block text-sm font-medium text-foreground">Email</label>
               <div className="relative">
-                <Mail size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca8a0]" />
+                <Mail size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="vous@exemple.com"
-                  className="h-12 w-full rounded-xl border bg-white pl-11 pr-4 text-sm outline-none ring-[#9ed0ae] placeholder:text-[#a3aca6] focus:ring-2"
+                  className="h-12 w-full rounded-xl border bg-card pl-11 pr-4 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
                 />
               </div>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-[#405247]">Mot de passe</label>
+              <label className="mb-2 block text-sm font-medium text-foreground">Mot de passe</label>
               <div className="relative">
-                <Lock size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca8a0]" />
+                <Lock size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type={montrerMotDePasse ? "text" : "password"}
                   required
                   value={motDePasse}
                   onChange={(e) => setMotDePasse(e.target.value)}
                   placeholder="••••••••"
-                  className="h-12 w-full rounded-xl border bg-white pl-11 pr-11 text-sm outline-none ring-[#9ed0ae] placeholder:text-[#a3aca6] focus:ring-2"
+                  className="h-12 w-full rounded-xl border bg-card pl-11 pr-11 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
                 />
-                <button type="button" onClick={() => setMontrerMotDePasse(!montrerMotDePasse)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9ca8a0]">
+                <button aria-label={montrerMotDePasse ? "Masquer le mot de passe" : "Afficher le mot de passe"} type="button" onClick={() => setMontrerMotDePasse(!montrerMotDePasse)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
                   {montrerMotDePasse ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
             </div>
             <div className="flex justify-end">
-              <button type="button" onClick={() => router.push("/mot-de-passe-oublie")} className="text-sm font-medium text-[#237e56] hover:underline">
+              <button type="button" onClick={() => router.push("/mot-de-passe-oublie")} className="text-sm font-medium text-primary hover:underline">
                 Mot de passe oublié ?
               </button>
             </div>
-            <Button type="submit" disabled={chargement} className="h-12 w-full bg-[#237e56] text-base hover:bg-[#1c6847]">
+            <Button type="submit" disabled={chargement} className="h-12 w-full text-base">
               {chargement ? "Connexion..." : "Se connecter"}
               {!chargement && <ArrowRight size={18} className="ml-1" />}
             </Button>
           </form>
 
           <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-[#e5e4df]" />
-            <span className="text-xs text-[#98a099]">ou</span>
-            <div className="h-px flex-1 bg-[#e5e4df]" />
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">ou</span>
+            <div className="h-px flex-1 bg-border" />
           </div>
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
             Pas encore de compte ?{" "}
-            <button onClick={() => router.push(`/inscription?retour=${encodeURIComponent(retour)}`)} className="font-semibold text-[#237e56] hover:underline">
+            <button onClick={() => router.push(`/inscription?retour=${encodeURIComponent(retour)}`)} className="font-semibold text-primary hover:underline">
               Créer un compte
             </button>
           </p>

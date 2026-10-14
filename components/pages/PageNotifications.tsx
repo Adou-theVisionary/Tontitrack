@@ -86,71 +86,71 @@ export function PageNotifications() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm text-muted-foreground">Restez informé</p>
-          <h2 className="mt-1 text-xl font-semibold text-[#20392d]">Vos notifications</h2>
+          <h2 className="mt-1 text-xl font-semibold text-foreground">Vos notifications</h2>
         </div>
         {nonLues > 0 && (
-          <Button onClick={marquerToutesNotificationsLues} variant="outline" className="border-[#c5dcc9] text-[#237e56]">
+          <Button onClick={marquerToutesNotificationsLues} variant="outline" className="w-full sm:w-auto">
             <Check size={16} /> Tout marquer comme lu
           </Button>
         )}
       </div>
 
-      <div className="flex gap-5 border-b text-sm">
+      <div className="flex gap-5 overflow-x-auto border-b text-sm">
         <button
           onClick={() => setFiltre("non_lues")}
-          className={`border-b-2 pb-3 font-semibold ${filtre === "non_lues" ? "border-[#2c8c60] text-[#237e56]" : "border-transparent text-muted-foreground"}`}
+          className={`min-h-11 shrink-0 border-b-2 pb-3 font-semibold ${filtre === "non_lues" ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}
         >
-          Non lues {nonLues > 0 && <span className="ml-1 rounded-full bg-[#e8f5ef] px-2 py-0.5 text-xs">{nonLues}</span>}
+          Non lues {nonLues > 0 && <span className="ml-1 rounded-full bg-primary-soft px-2 py-0.5 text-xs">{nonLues}</span>}
         </button>
         <button
           onClick={() => setFiltre("toutes")}
-          className={`border-b-2 pb-3 ${filtre === "toutes" ? "border-[#2c8c60] font-semibold text-[#237e56]" : "border-transparent text-muted-foreground"}`}
+          className={`min-h-11 shrink-0 border-b-2 pb-3 ${filtre === "toutes" ? "border-primary font-semibold text-primary" : "border-transparent text-muted-foreground"}`}
         >
           Toutes
         </button>
       </div>
 
       {notificationsFiltrees.length === 0 ? (
-        <div className="rounded-2xl border bg-white p-12 text-center">
-          <Bell size={32} className="mx-auto text-[#9bc8aa]" />
-          <p className="mt-3 text-sm font-medium text-[#405247]">Aucune notification.</p>
+        <div className="rounded-2xl border bg-card p-12 text-center">
+          <Bell size={32} className="mx-auto text-primary" />
+          <p className="mt-3 text-sm font-medium text-foreground">Aucune notification.</p>
           <p className="mt-1 text-xs text-muted-foreground">Vous êtes à jour.</p>
         </div>
       ) : (
-        <div className="divide-y rounded-2xl border bg-white">
+        <div className="divide-y rounded-2xl border bg-card">
           {notificationsFiltrees.map((notif) => {
             const Icon = iconesParType[notif.type] || Bell;
             const tone = toneParType[notif.type] || "gray";
             const toneStyles: Record<string, string> = {
-              green: "bg-[#e8f5ef] text-[#27845a]",
-              blue: "bg-[#e8f2f8] text-[#287397]",
-              amber: "bg-[#fff3d8] text-[#a96d00]",
-              red: "bg-[#fdebea] text-[#a53d39]",
-              gray: "bg-[#f0f1ee] text-[#68746d]",
+              green: "bg-primary-soft text-success",
+              blue: "bg-info/15 text-info",
+              amber: "bg-warning/15 text-warning",
+              red: "bg-destructive/15 text-destructive",
+              gray: "bg-muted text-muted-foreground",
             };
             return (
               <button
                 key={notif.id}
                 onClick={() => { void marquerNotificationLue(notif.id); const chemin = cheminNotification(notif); if (chemin) router.push(chemin); }}
-                className={`flex w-full gap-4 p-5 text-left transition hover:bg-[#fbfcf9] ${!notif.lue ? "bg-[#fcfefb]" : ""}`}
+                className={`entree-discrete flex w-full gap-4 p-5 text-left transition-[background-color,box-shadow,transform] duration-200 hover:bg-surface-subtle hover:shadow-sm focus-visible:relative ${!notif.lue ? "bg-surface-raised" : ""}`}
               >
                 <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${toneStyles[tone]}`}>
                   <Icon size={17} />
                 </span>
                 <div className="flex-1">
                   <div className="flex flex-col justify-between gap-1 sm:flex-row">
-                    <p className="text-sm font-semibold text-[#33473b]">{notif.titre}</p>
+                    <p className="text-sm font-semibold text-foreground">{notif.titre}</p>
                     <span className="text-xs text-muted-foreground">{formaterDateHeure(notif.date)}</span>
                   </div>
                   <p className="mt-1 text-sm leading-5 text-muted-foreground">{notif.message}</p>
-                  <p className="mt-2 text-[10px] font-medium uppercase tracking-wider text-[#98a099]">
+                  <p className="mt-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                     {libelleTypeNotification(notif.type)}
                   </p>
                 </div>
-                {!notif.lue && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#dda735]" />}
+                {!notif.lue && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-warning" />}
               </button>
             );
           })}

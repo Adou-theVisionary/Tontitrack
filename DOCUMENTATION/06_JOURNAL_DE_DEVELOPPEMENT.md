@@ -1,5 +1,29 @@
 # Journal développement
 
+## Intervention 0040 — Animations et finitions UX/UI
+
+J'ai ajouté une convention de mouvement réutilisable, limitée à 150, 200 et 280 ms, avec une courbe commune et une préférence stricte pour l'opacité, les transformations et les transitions de couleur. J'ai harmonisé boutons, champs, interrupteurs, progression, cartes interactives, onglets, menus, sélecteurs, dialogues, panneaux et toasts. Les menus utilisateur et Super Admin, les états UI, indicateurs de synchronisation et erreurs de création bénéficient de retours plus lisibles. Je n'ai ajouté aucune dépendance ni modifié les règles métier, montants, API, permissions, Prisma ou migrations. Les vérifications visuelles, clavier, mouvement réduit et performance restent manuelles.
+
+## Intervention 0039 — Responsive approfondi et animations
+
+Le retour utilisateur confirme que le thème sombre est satisfaisant mais que le responsive ne l'est pas. J'ai donc corrigé les causes structurelles identifiées en lecture statique : coques mobiles, zones de sécurité, tableaux localement défilables, dialogues, boutons d'action, champs de modales, listes de membres et invitations, pagination et messages fixes. J'ai ajouté mouvements courts pour tiroirs, blocs, notifications et boutons, compatibles avec la réduction de mouvement. Je n'ai modifié ni métier, ni API, ni sécurité, ni Prisma. Une recette visuelle réelle reste indispensable.
+
+## Intervention 0038 — Responsive et thème sombre intégral
+
+J'ai étendu les surfaces sémantiques clair/sombre, supprimé le masquage horizontal global et protégé les composants métier encore fondés sur la palette historique par une compatibilité limitée au thème sombre. J'ai revu directement les coques, boutons, pages profil, paramètres, notifications, finances, tontines, dialogues et Super Admin ; la bascule Paramètres utilise maintenant le fournisseur partagé au lieu d'un état local. Je n'ai modifié ni règles financières, ni permissions, ni API, ni Prisma. Les contrôles navigateur et les validations techniques restent manuels.
+
+## Intervention 0037 — Fondations UX/UI et thèmes
+
+J'ai réalisé un audit statique des écrans réellement présents, conservé l'identité TontiTrack, puis ajouté des jetons clair/sombre, un fournisseur de thème global et un sélecteur accessible dans les espaces public, utilisateur et Super Admin. J'ai harmonisé les coques, états UI, modales, tables, boutons et connexion à leur niveau partagé. Je n'ai modifié ni règles métier, ni API, ni Prisma, ni données financières. Les vérifications navigateur et techniques restent manuelles.
+
+## Intervention 0036 — Audit et correction Super Admin
+
+J'ai identifié que la route Rôles retournait une promesse non attendue, ce qui supprimait le tableau attendu par l'interface et provoquait le plantage sur `roles.map`. J'ai attendu le service, validé le contrat de réponse côté client, affiché rôles système et personnalisés de façon sûre, puis corrigé l'historique administratif des comptes ciblés. Je n'ai exécuté aucune validation technique.
+
+## Intervention 0035 — Gouvernance Super Admin renforcée
+
+J'ai étendu l'administration globale avec des rôles personnalisés persistés, un registre de permissions documenté, la révocation de sessions, une supervision administrative des tontines, des litiges tracés, des incidents fondés sur des événements réels et un unique paramètre global effectivement appliqué à l'export d'audit. Je prépare une migration additive ; je ne l'ai ni appliquée ni validée techniquement. Les contrôles serveur, transactions sérialisables et refus par défaut restent l'autorité, jamais l'interface.
+
 ## Intervention 0034 — Redirection post-authentification
 
 J'ai corrigé la redirection qui envoyait toujours la connexion vers le tableau utilisateur. La route de connexion relit maintenant les rôles persistés, applique les permissions centralisées et calcule côté serveur une destination interne autorisée. Un Super Admin actif arrive par défaut dans l'administration globale ; un utilisateur standard conserve le tableau utilisateur. Les retours Tontine restent préservés, tandis qu'un retour administratif non autorisé ou externe est refusé.

@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 
 export function EtatChargement({ message = "Chargement..." }: { message?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-16">
-      <Loader2 className="h-8 w-8 animate-spin text-[#237e56]" />
+    <div className="entree-discrete flex flex-col items-center justify-center gap-3 py-16" role="status" aria-live="polite">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
       <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );
@@ -18,11 +18,11 @@ export function EtatErreur({
   onReessayer?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-16">
-      <div className="grid h-14 w-14 place-items-center rounded-full bg-[#fdebea] text-[#a53d39]">
+    <div className="retour-validation flex flex-col items-center justify-center gap-3 py-16" role="alert">
+      <div className="grid h-14 w-14 place-items-center rounded-full bg-destructive/10 text-destructive">
         <AlertCircle size={26} />
       </div>
-      <p className="text-center text-sm font-medium text-[#405247]">{message}</p>
+      <p className="text-center text-sm font-medium text-foreground">{message}</p>
       {onReessayer && (
         <Button variant="outline" onClick={onReessayer} className="mt-1">
           Réessayer
@@ -48,14 +48,14 @@ export function EtatVide({
   onActionSecondaire?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-      <div className="grid h-16 w-16 place-items-center rounded-full bg-[#f1f8f2] text-[#237e56]">
+    <div className="entree-discrete flex flex-col items-center justify-center gap-3 py-16 text-center">
+      <div className="grid h-16 w-16 place-items-center rounded-full bg-primary/10 text-primary">
         <Inbox size={28} />
       </div>
-      <p className="text-base font-semibold text-[#20392d]">{titre}</p>
+      <p className="text-base font-semibold text-foreground">{titre}</p>
       {description && <p className="max-w-sm text-sm text-muted-foreground">{description}</p>}
       {actionLabel && onAction && (
-        <Button onClick={onAction} className="mt-2 bg-[#237e56] hover:bg-[#1c6847]">
+        <Button onClick={onAction} className="mt-2">
           {actionLabel}
         </Button>
       )}
@@ -69,5 +69,5 @@ export function EtatVide({
 }
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-lg bg-[#e8e7e2] ${className}`} />;
+  return <div className={`animate-pulse rounded-lg bg-muted ${className}`} />;
 }

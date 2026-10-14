@@ -8,7 +8,7 @@ export function IndicateurSync() {
 
   if (!enLigne || syncStatut === "HORS_LIGNE") {
     return (
-      <div className="flex items-center gap-2 rounded-full bg-[#fff3d8] px-3 py-1.5 text-xs font-medium text-[#9b6500]">
+      <div className="retour-validation flex items-center gap-2 rounded-full bg-warning/15 px-3 py-1.5 text-xs font-medium text-warning" role="status" aria-live="polite">
         <WifiOff size={14} />
         Hors connexion
       </div>
@@ -18,21 +18,21 @@ export function IndicateurSync() {
   switch (syncStatut) {
     case "EN_COURS":
       return (
-        <div className="flex items-center gap-2 rounded-full bg-[#e8f2f8] px-3 py-1.5 text-xs font-medium text-[#24698a]">
+        <div className="retour-validation flex items-center gap-2 rounded-full bg-info/10 px-3 py-1.5 text-xs font-medium text-info" role="status" aria-live="polite">
           <RefreshCw size={14} className="animate-spin" />
           Synchronisation...
         </div>
       );
     case "ERREUR":
       return (
-        <div className="flex items-center gap-2 rounded-full bg-[#fdebea] px-3 py-1.5 text-xs font-medium text-[#a53d39]">
+        <div className="retour-validation flex items-center gap-2 rounded-full bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive" role="status" aria-live="polite">
           <AlertTriangle size={14} />
           Erreur de sync
         </div>
       );
     default:
       return (
-        <div className="flex items-center gap-2 rounded-full bg-[#e8f5ef] px-3 py-1.5 text-xs font-medium text-[#237b54]">
+        <div className="retour-validation flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary" role="status" aria-live="polite">
           <Check size={14} />
           Synchronisé
         </div>
@@ -44,7 +44,7 @@ export function BanniereHorsLigne() {
   const { enLigne } = useApp();
   if (enLigne) return null;
   return (
-    <div className="flex items-center gap-2 border-b border-[#e5c44e]/30 bg-[#fff8e1] px-4 py-2 text-sm text-[#8a6300]">
+    <div className="retour-validation flex items-center gap-2 border-b border-warning/30 bg-warning/10 px-4 py-2 text-sm text-warning" role="status" aria-live="polite">
       <WifiOff size={16} />
       <span>Vous êtes hors connexion. Les données affichées peuvent ne pas être à jour.</span>
     </div>

@@ -3,11 +3,11 @@ import { cn } from "@/lib/utils";
 type Tone = "green" | "amber" | "gray" | "red" | "blue";
 
 const toneStyles: Record<Tone, string> = {
-  green: "bg-[#e8f5ef] text-[#237b54]",
-  amber: "bg-[#fff3d8] text-[#9b6500]",
-  gray: "bg-[#f1f0eb] text-[#676b64]",
-  red: "bg-[#fdebea] text-[#a53d39]",
-  blue: "bg-[#e8f2f8] text-[#24698a]",
+  green: "bg-primary/10 text-primary",
+  amber: "bg-warning/15 text-warning",
+  gray: "bg-muted text-muted-foreground",
+  red: "bg-destructive/10 text-destructive",
+  blue: "bg-info/10 text-info",
 };
 
 export function BadgeStatut({

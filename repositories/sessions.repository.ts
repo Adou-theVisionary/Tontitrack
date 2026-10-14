@@ -7,7 +7,7 @@ export const sessionsRepository = {
   trouverValide(jetonHash: string) {
     return prisma.session.findUnique({
       where: { jetonHash },
-      include: { utilisateur: { include: { profil: true, rolesPlateforme: true } } },
+      include: { utilisateur: { include: { profil: true, rolesPlateforme: true, rolesPersonnalises: { include: { role: { include: { permissions: true } } } } } } },
     });
   },
   invalider(jetonHash: string) {

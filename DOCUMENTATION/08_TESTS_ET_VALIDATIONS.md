@@ -1,5 +1,43 @@
 # Tests et validations
 
+## Intervention 0040 — Animations et finitions UX/UI
+
+Je n'ai exécuté aucun serveur, test, lint, typecheck ni build. J'ai préparé `tests/ui/intervention-d-animations.test.ts` pour les boutons, champs, erreurs, menus, panneaux, onglets, dialogues, toasts, cartes, états UI et synchronisation. Je dois rejouer connexion, tableau de bord, finances, création, cotisations, reversements, clôture, notifications et Super Admin dans les thèmes Clair, Sombre et Système, aux largeurs 320, 375, 768 et 1440 px.
+
+Je dois contrôler Tab, Maj+Tab, Entrée, Espace et Échap, le retour du focus depuis les modales, la fermeture des tiroirs, les zones tactiles, les notifications multiples, les erreurs visibles, l'absence de faux succès, la non-double soumission et `prefers-reduced-motion`. Je dois aussi vérifier sur mobile que les interactions restent réactives sans déplacement inattendu ni régression du thème ou du responsive.
+
+Commandes restantes, à exécuter manuellement depuis `C:\Users\isasa\Desktop\tontitrack_prod` : `npm run typecheck`, `npm run lint`, puis `npm run build`. Je dois communiquer leurs sorties avant toute affirmation de validation technique.
+
+## Intervention 0039 — Responsive approfondi et animations
+
+Je n'ai exécuté aucun serveur, test, lint, typecheck ni build. Je dois utiliser `tests/ui/intervention-c-responsive.test.ts` comme grille de recette manuelle : chaque route doit être contrôlée en 320, 375, 390, 430, 768, 1024, 1280 et 1440 px, dans les thèmes clair, sombre et système, y compris en paysage et faible hauteur sur téléphone.
+
+Je dois vérifier à chaque étape l'absence de défilement horizontal global, le défilement local des tableaux, les en-têtes mobiles, le menu utilisateur et administratif, les actions financières, la pagination, les formulaires et modales, les textes longs, les retours d'état, le focus clavier, Échap, les zones tactiles et `prefers-reduced-motion`. Aucune validation responsive ne peut être déclarée avant ces observations réelles.
+
+Commandes restantes, à exécuter manuellement depuis `C:\Users\isasa\Desktop\tontitrack_prod` : `npm run typecheck`, `npm run lint`, puis `npm run build`. Je dois communiquer leurs sorties pour les analyser.
+
+## Intervention 0038 — Responsive et thème sombre intégral
+
+Je n'ai exécuté ni commande technique ni test automatisé. J'ai préparé `tests/ui/intervention-b-responsive-theme.test.ts`, qui couvre les routes publiques, authentification, espace utilisateur, création et détail de tontine, cotisations, reversements, clôture et Super Admin aux largeurs 320, 768 et 1440 px, dans les thèmes clair, sombre et système.
+
+Je dois vérifier manuellement qu'aucune carte, zone de saisie, menu, tableau, dialogue ou panneau latéral ne garde un fond clair non intentionnel en thème sombre ; que les statuts et montants restent lisibles ; que les portails Radix suivent le thème ; que les tables défilent localement seulement ; que les raccourcis clavier, focus et cibles tactiles restent utilisables ; et que les parcours financiers, permissions et appels API n'ont pas changé.
+
+Commandes restantes, à lancer manuellement depuis `C:\Users\isasa\Desktop\tontitrack_prod` après revue visuelle : `npm run typecheck`, `npm run lint`, puis `npm run build`. Je ne présente aucune de ces validations comme réussie.
+
+## Intervention 0037 — Modernisation UX/UI
+
+Je n'ai exécuté aucune commande technique ni test. J'ai préparé `tests/ui/modernisation-ux-ui.test.ts` pour thèmes clair, sombre et système, persistance, préférence système, clavier, lecteur d'écran, mouvement réduit, tailles 320 à 1440 px, menus, modales et non-régression des parcours sensibles. Je dois exécuter manuellement typecheck, lint et build, puis vérifier le navigateur sur pages publiques, connexion, espace utilisateur, Tontines et Super Admin ; aucun de ces contrôles n'est présenté comme réussi.
+
+## Intervention 0036 — Super Admin
+
+Le propriétaire a communiqué que Prisma Client, typecheck, ESLint et build avaient réussi avant cette correction, tandis que la page Rôles échouait fonctionnellement. Je n'ai exécuté aucune commande durant cette intervention. J'ai préparé des scénarios de contrat API Rôles, données absentes, rôles personnalisés, historique de compte, permissions et régression financière. Je dois relancer manuellement typecheck, lint et build après correction puis effectuer le parcours navigateur.
+
+## Intervention 0035 — Gouvernance Super Admin
+
+Je n'ai exécuté aucun test, migration, génération Prisma, typecheck, lint ni build. J'ai préparé les scénarios utilisateurs, rôles personnalisés, modules, paramètre réel, supervision, suspension, litiges, audit, incidents, permissions et concurrence dans `tests/administration/phase-3-1-1-gouvernance.test.ts`.
+
+Je dois appliquer la migration préparée sur une base de test sauvegardée, générer Prisma Client, puis lancer typecheck, lint et build. Je dois ensuite vérifier manuellement l'absence d'accès sans permission, l'invalidation réelle d'une session suspendue, la protection du dernier Super Admin, le blocage des opérations de tontine suspendue et l'absence de modification financière depuis l'administration.
+
 ## Intervention 0034 — Redirection post-authentification
 
 J'ai préparé `tests/auth/redirection-authentification.test.ts` sans l'exécuter. Je dois vérifier manuellement : connexion d'un Super Admin actif vers administration, connexion standard vers tableau utilisateur, compte suspendu refusé, retrait/attribution de rôle visible à la connexion suivante et à chaque lecture de session, session invalidée ou expirée redirigée vers connexion, retour Tontine interne conservé, retour administratif seulement si autorisé, retour externe refusé, déconnexion puis reconnexion, et absence de boucle entre connexion, espace utilisateur et administration.

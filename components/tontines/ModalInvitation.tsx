@@ -47,39 +47,39 @@ export function ModalInvitation({
   const demandes = tontine.membres.filter((m) => m.statut === "EN_ATTENTE");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#183326]/30 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-[#fffefa] p-6 shadow-2xl sm:rounded-3xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm sm:items-center sm:p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="titre-invitation" className="max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-popover p-5 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-3xl sm:p-6">
         <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-[#20392d]">Invitation — {tontine.nom}</h3>
-          <button onClick={onClose} className="rounded-lg p-2 text-[#77847b] hover:bg-[#f0f2ed]"><X size={19} /></button>
+          <h3 id="titre-invitation" className="text-lg font-semibold text-foreground">Invitation — {tontine.nom}</h3>
+          <button aria-label="Fermer" onClick={onClose} className="rounded-lg p-2 text-muted-foreground hover:bg-muted"><X size={19} /></button>
         </div>
 
         {/* Code d'invitation */}
-        <div className="rounded-xl bg-[#f8faf6] p-4">
+        <div className="rounded-xl bg-surface-subtle p-4">
           <p className="text-xs text-muted-foreground">Code d’invitation</p>
           <div className="mt-2 flex items-center gap-3">
-            <p className="text-2xl font-bold tracking-widest text-[#237e56]">{tontine.codeInvitation}</p>
-            <Button onClick={handleCopierCode} variant="outline" className="border-[#c5dcc9] text-[#237e56]">
+          <p className="text-2xl font-bold tracking-widest text-primary">{tontine.codeInvitation}</p>
+          <Button onClick={handleCopierCode} variant="outline" className="border-primary/30 text-primary">
               {copie ? <><Check size={16} /> Copié</> : <><Copy size={16} /> Copier</>}
             </Button>
           </div>
         </div>
 
         {/* Lien d'invitation */}
-        <div className="mt-3 rounded-xl border bg-white p-4">
+        <div className="mt-3 rounded-xl border bg-card p-4">
           <p className="text-xs text-muted-foreground">Lien d’invitation</p>
           <div className="mt-2 flex items-center gap-2">
-            <div className="flex-1 truncate rounded-lg bg-[#f8faf6] px-3 py-2 text-xs text-[#537362]">
+            <div className="flex-1 truncate rounded-lg bg-surface-subtle px-3 py-2 text-xs text-muted-foreground">
               /tontines/rejoindre?code={tontine.codeInvitation}
             </div>
-            <Button onClick={handleCopierLien} variant="outline" className="shrink-0 border-[#c5dcc9] text-[#237e56]">
+            <Button onClick={handleCopierLien} variant="outline" className="shrink-0 border-primary/30 text-primary">
               <Copy size={16} /> Copier
             </Button>
           </div>
         </div>
 
         {/* Partager */}
-        <Button onClick={handlePartager} className="mt-3 w-full bg-[#237e56] hover:bg-[#1c6847]">
+        <Button onClick={handlePartager} className="mt-3 w-full">
           <Share2 size={17} /> Partager
         </Button>
 
@@ -92,7 +92,7 @@ export function ModalInvitation({
             </div>
             <div className="mt-3 space-y-2">
               {demandes.map((membre) => (
-                <div key={membre.id} className="flex items-center gap-3 rounded-xl border bg-white p-3">
+                <div key={membre.id} className="flex flex-wrap items-center gap-3 rounded-xl border bg-card p-3">
                   <div className="grid h-9 w-9 place-items-center rounded-full text-xs font-bold text-white" style={{ backgroundColor: membre.avatarCouleur }}>
                     {membre.prenom[0]}{membre.nom[0]}
                   </div>
@@ -110,7 +110,7 @@ export function ModalInvitation({
         )}
 
         {/* Info */}
-        <div className="mt-4 flex items-start gap-2 rounded-xl bg-[#fff8e1] p-3 text-xs text-[#8a6300]">
+        <div className="mt-4 flex items-start gap-2 rounded-xl bg-warning/15 p-3 text-xs text-warning">
           <Mail size={14} className="mt-0.5 shrink-0" />
           <span>L’invitation ne donne pas automatiquement accès à la tontine. Le créateur doit approuver chaque demande d’adhésion.</span>
         </div>

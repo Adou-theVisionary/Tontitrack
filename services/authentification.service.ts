@@ -47,6 +47,6 @@ export async function authentifierUtilisateur(email: string, motDePasse: string)
   await authentificationRepository.enregistrerDerniereConnexion(utilisateur.id);
   return {
     utilisateur: presenterUtilisateur(utilisateur),
-    permissions: permissionsEffectives(utilisateur.rolesPlateforme.map((attribution) => attribution.role)),
+    permissions: permissionsEffectives(utilisateur.rolesPlateforme.map((attribution) => attribution.role), utilisateur.rolesPersonnalises.flatMap((attribution) => attribution.role.permissions.map((permissionRole) => permissionRole.permission))),
   };
 }

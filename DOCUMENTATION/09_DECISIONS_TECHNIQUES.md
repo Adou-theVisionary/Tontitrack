@@ -1,5 +1,23 @@
 # Décisions techniques
 
+## Thèmes globaux fondés sur jetons — 14/10/2026
+
+Décideur : propriétaire, par demande de modernisation UX/UI. J'utilise `next-themes`, déjà présent, plutôt qu'un stockage PostgreSQL ou une dépendance nouvelle. Cette solution garde la préférence dans le navigateur, suit le système lorsque demandé et applique une seule classe de thème à l'ensemble de la plateforme. Je conserve les tokens sémantiques dans les styles globaux et les expose à Tailwind ; les composants ne doivent pas créer leur propre gestionnaire de thème.
+
+Je privilégie un contrôle natif accessible pour Clair, Sombre et Système. J'écarte une palette nouvelle ou un thème indépendant pour l'administration afin de préserver l'identité TontiTrack et la cohérence entre espaces. Impact : les composants futurs doivent employer les jetons, tandis que la migration des couleurs littérales existantes reste progressive et vérifiable. Voir `INTERVENTIONS/0037_MODERNISATION_UX_UI_FONDATIONS.md`.
+
+## Contrats administratifs attendus avant rendu — 14/10/2026
+
+Décideur : propriétaire, par demande d'audit. Je traite toute réponse administrative comme non fiable côté interface, même lorsqu'elle provient d'une route interne. Une route asynchrone attend son service avant sérialisation ; le composant vérifie ensuite l'enveloppe et les collections indispensables avant de les parcourir. Cette double protection évite une erreur de rendu sans masquer une erreur serveur.
+
+Je conserve l'autorisation comme responsabilité serveur. Masquer une action sans permission améliore le parcours, mais ne remplace jamais la session, le contrôle de permission, les transactions ni la protection du dernier Super Admin. Voir `INTERVENTIONS/0036_AUDIT_CORRECTION_SUPER_ADMIN.md`.
+
+## Gouvernance Super Admin additive et sans mutation financière — 14/10/2026
+
+Décideur : propriétaire, par demande Phase 3.1.1. Je sépare les rôles personnalisés des rôles système et conserve `SUPER_ADMIN` comme rôle critique non constructible indirectement. Chaque permission est déclarée avec identifiant stable, module et description ; une permission inconnue reste refusée. Les modifications sensibles exigent un motif et sont auditées.
+
+Je représente la suspension administrative d'une tontine hors de son statut financier afin de ne pas réécrire les rotations, montants, confirmations ou historiques. Elle bloque les opérations compatibles au niveau service et ne constitue pas une clôture ni une régularisation. Les litiges administratifs conservent leurs notes et transitions ; ils ne modifient aucune écriture financière. Voir `INTERVENTIONS/0035_GOUVERNANCE_SUPER_ADMIN.md`.
+
 ## Destination post-authentification calculée côté serveur — 13/10/2026
 
 Décideur : propriétaire, par demande de correction. Je décide la destination après authentification dans la route serveur à partir des rôles persistés et du registre de permissions, plutôt que dans le composant de connexion. Cette décision évite que l'interface doive connaître ou interpréter les rôles, tout en préservant une extension future vers d'autres espaces et permissions.
@@ -97,3 +115,23 @@ Base de développement est vide au contrôle communiqué et sauvegardée. Cette 
 | Alignement Prisma séparé des évolutions Tontine | Validée phase préparation | Corriger d'abord décalage schéma/migration ; config publique, retards, permissions et règles financières dans lots futurs distincts |
 
 Nouvelles décisions doivent indiquer date, décideur, contexte, alternatives, impact et rapport associé.
+
+## Thème sombre par jetons et compatibilité transitoire ciblée — 14/10/2026
+
+Décideur : propriétaire, par demande d'intervention B. Je conserve l'identité visuelle actuelle de TontiTrack et j'étends le système de jetons avec trois niveaux de surfaces : fond, carte rehaussée et panneau discret. Les nouveaux composants doivent employer ces jetons, les statuts sémantiques et les couleurs `popover` afin que les portails Radix suivent le thème actif.
+
+De nombreux composants métier précédents contiennent toutefois des couleurs hexadécimales locales. Les convertir tous immédiatement multiplierait le risque de régression visuelle et fonctionnelle. J'ajoute donc une compatibilité explicitement limitée à `.dark` qui associe ces anciennes valeurs aux jetons correspondants. Ce n'est ni une inversion CSS ni un filtre global : les couleurs de statut restent sémantiques et le thème clair demeure inchangé. Cette décision est transitoire ; toute retouche de composant concerné doit remplacer ses valeurs locales par les jetons.
+
+Je ne masque pas le débordement horizontal globalement, car ce choix cache les défauts de responsive. Les tables conservent un défilement local et les modales sont limitées à la fenêtre disponible. La préférence de thème appartient exclusivement à `next-themes`, y compris depuis Paramètres, afin que Clair, Sombre et Système restent cohérents. Critère de maintien : revue visuelle manuelle complète, contraste suffisant et absence de surface claire non intentionnelle en mode sombre. Voir `INTERVENTIONS/0038_RESPONSIVE_THEME_SOMBRE_UX.md`.
+
+## Tables lisibles, actions empilées et mouvement réduit — 14/10/2026
+
+Décideur : propriétaire, par demande d'intervention C. Je privilégie une table à largeur minimale avec défilement horizontal local plutôt que des colonnes comprimées ou supprimées. Les données, recherches, pagination et actions restent donc accessibles, même à 320 px. Les formulaires et dialogues gardent une colonne avant `sm`, une hauteur dynamique et des actions empilées ; cette composition prévaut sur une disposition horizontale fragile.
+
+Je limite les mouvements à 200 ms, `opacity`, `transform` et transitions de couleur. Toute animation respecte `prefers-reduced-motion` et aucun statut fonctionnel ne dépend de sa lecture. Les en-têtes mobiles n'affichent que les contrôles essentiels, tandis que le tiroir conserve les destinations complètes et se ferme aussi avec Échap. La validation reste visuelle et manuelle selon la matrice 0039 ; voir `INTERVENTIONS/0039_RESPONSIVE_APPROFONDI_ANIMATIONS.md`.
+
+## Mouvement réutilisable, opt-in et non financier — 14/10/2026
+
+Décideur : propriétaire, par demande d'intervention D. Je fixe trois durées partagées : 150 ms pour une micro-interaction, 200 ms pour une transition ordinaire et 280 ms pour un panneau. J'emploie une même courbe naturelle et je privilégie opacité, transformation, couleur, bordure et ombre. Je n'ajoute pas de bibliothèque : Tailwind, CSS et les primitives Radix existantes suffisent, sans coût de chargement supplémentaire.
+
+Je réserve l'élévation de carte à `surface-interactive`, donc aux surfaces qui sont effectivement cliquables. Les montants, graphiques, confirmations et résultats financiers ne sont jamais interpolés ni annoncés avant réponse du serveur. Les erreurs et les statuts gardent toujours texte, rôle et focus accessibles ; `prefers-reduced-motion` les rend immédiatement stables. Voir `INTERVENTIONS/0040_ANIMATIONS_MICRO_INTERACTIONS.md`.

@@ -89,9 +89,9 @@ export function GestionInvitations({ tontineId, estCreateur }: { tontineId: stri
         <h4 className="font-semibold text-[#20392d]">Nouvelle invitation</h4>
         <p className="mt-1 text-xs text-muted-foreground">Laissez l’identifiant vide pour créer un lien sécurisé. Le jeton n’est affiché qu’une fois.</p>
         <label className="mt-4 block text-xs font-medium text-[#405247]" htmlFor="invite-id">Identifiant utilisateur ciblé</label>
-        <input id="invite-id" value={inviteId} onChange={(event) => setInviteId(event.target.value.trim())} placeholder="Optionnel" className="mt-1 h-10 w-full rounded-lg border bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[#9ed0ae]" />
+        <input id="invite-id" value={inviteId} onChange={(event) => setInviteId(event.target.value.trim())} placeholder="Optionnel" className="mt-1 h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[#9ed0ae]" />
         <label className="mt-3 block text-xs font-medium text-[#405247]" htmlFor="invitation-expire-le">Expiration</label>
-        <input id="invitation-expire-le" type="datetime-local" value={expireLe} onChange={(event) => setExpireLe(event.target.value)} className="mt-1 h-10 w-full rounded-lg border bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[#9ed0ae]" />
+        <input id="invitation-expire-le" type="datetime-local" value={expireLe} onChange={(event) => setExpireLe(event.target.value)} className="mt-1 h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[#9ed0ae]" />
         <Button onClick={() => void creer()} disabled={chargement || !expireLe} className="mt-3 w-full bg-[#237e56] hover:bg-[#1c6847]"><Send size={16} /> Créer l’invitation</Button>
       </div>
 
@@ -109,14 +109,14 @@ export function GestionInvitations({ tontineId, estCreateur }: { tontineId: stri
       {!chargement && invitations.length === 0 ? <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">Aucune invitation créée.</p> : null}
       <div className="space-y-2">
         {invitations.map((invitation) => (
-          <div key={invitation.id} className="flex items-center gap-3 rounded-xl border bg-white p-3">
+          <div key={invitation.id} className="flex flex-wrap items-center gap-3 rounded-xl border bg-white p-3">
             <Link2 size={16} className="text-[#237e56]" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-[#405247]">{invitation.inviteId ? "Invitation ciblée" : "Lien sécurisé"}</p>
               <p className="text-xs text-muted-foreground">Expire le {new Date(invitation.expireLe).toLocaleString("fr-FR")}</p>
             </div>
             <span className="text-xs font-medium text-[#657169]">{libellesStatut[invitation.statut]}</span>
-            {invitation.estActive && <button aria-label="Révoquer l’invitation" onClick={() => void revoquer(invitation.id)} disabled={chargement} className="rounded-lg p-2 text-[#a53d39] hover:bg-[#fdebea]"><X size={16} /></button>}
+            {invitation.estActive && <button aria-label="Révoquer l’invitation" onClick={() => void revoquer(invitation.id)} disabled={chargement} className="grid h-11 w-11 place-items-center rounded-lg text-[#a53d39] hover:bg-[#fdebea]"><X size={16} /></button>}
           </div>
         ))}
       </div>

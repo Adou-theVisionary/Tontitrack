@@ -1,5 +1,9 @@
 # Registre dépendances
 
+## Intervention 0035
+
+Je n'ai ajouté aucune dépendance. Je réutilise Prisma, Next.js, Zod, Radix/Tailwind et les composants d'état déjà présents. La migration `20261014090000_gouvernance_super_admin` est préparée mais non appliquée.
+
 Source : `package.json` consulté 10/10/2026.
 
 | Groupe | Dépendances principales | Rôle observé |

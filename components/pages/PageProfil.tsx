@@ -32,22 +32,22 @@ export function PageProfil({ ouvrirIdentite = false }: { ouvrirIdentite?: boolea
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <p className="text-sm text-muted-foreground">Votre espace personnel</p>
-        <h2 className="mt-1 text-xl font-semibold text-[#20392d]">Mon profil</h2>
+        <h2 className="mt-1 text-xl font-semibold text-foreground">Mon profil</h2>
       </div>
 
       {/* Carte profil */}
-      <div className="rounded-2xl border bg-white p-6 sm:p-8">
+      <div className="rounded-2xl border bg-card p-6 sm:p-8">
         <div className="flex flex-col items-center gap-4 border-b pb-7 sm:flex-row">
           <div className="relative">
-            <div className="grid h-20 w-20 place-items-center rounded-full bg-[#d8ecde] text-2xl font-semibold text-[#237e56]">
+            <div className="grid h-20 w-20 place-items-center rounded-full bg-primary-soft text-2xl font-semibold text-primary">
               {utilisateur.prenom[0]}{utilisateur.nom[0]}
             </div>
-            <button className="absolute bottom-0 right-0 grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-[#237e56] text-white shadow-sm">
+            <button className="absolute bottom-0 right-0 grid h-11 w-11 place-items-center rounded-full border-2 border-card bg-primary text-primary-foreground shadow-sm" aria-label="Modifier la photo de profil">
               <Camera size={13} />
             </button>
           </div>
           <div className="text-center sm:text-left">
-            <h3 className="text-lg font-semibold text-[#20392d]">{utilisateur.prenom} {utilisateur.nom}</h3>
+            <h3 className="text-lg font-semibold text-foreground">{utilisateur.prenom} {utilisateur.nom}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{utilisateur.email}</p>
             <div className="mt-2"><BadgeStatut tone={toneIdentite}>{libelleStatutIdentite(statutIdentite)}</BadgeStatut></div>
           </div>
@@ -65,7 +65,7 @@ export function PageProfil({ ouvrirIdentite = false }: { ouvrirIdentite?: boolea
       </div>
 
       {/* Identité et sécurité */}
-      <div className="rounded-2xl border bg-white p-5">
+      <div className="rounded-2xl border bg-card p-5">
         <div className="flex items-center gap-3">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#e8f5ef] text-[#247f55]"><ShieldCheck size={17} /></span>
           <div>
@@ -140,8 +140,8 @@ export function PageProfil({ ouvrirIdentite = false }: { ouvrirIdentite?: boolea
       )}
 
       {toast && (
-        <div className="fixed bottom-24 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#20392d] px-4 py-3 text-sm font-medium text-white shadow-xl lg:bottom-8">
-          <Check size={16} className="text-[#8dd0a5]" /> {toast}
+        <div role="status" className="notification-flottante fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-popover px-4 py-3 text-center text-sm font-medium text-popover-foreground shadow-xl lg:bottom-8">
+          <Check size={16} className="text-primary" /> {toast}
         </div>
       )}
     </div>
@@ -166,8 +166,8 @@ function ModalIdentite({ statut, onClose, onToast }: { statut: StatutIdentite; o
   const [verso, setVerso] = useState<string | null>(null);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#183326]/30 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="w-full max-w-lg rounded-t-3xl bg-[#fffefa] p-6 shadow-2xl sm:rounded-3xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm sm:items-center sm:p-4">
+      <div role="dialog" aria-modal="true" aria-label="Document d’identité" className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-popover p-5 text-popover-foreground shadow-2xl sm:rounded-3xl sm:p-6">
         <div className="mb-5 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-[#20392d]">Document d’identité</h3>
           <button onClick={onClose} className="rounded-lg p-2 text-[#77847b] hover:bg-[#f0f2ed]"><X size={19} /></button>
@@ -183,7 +183,7 @@ function ModalIdentite({ statut, onClose, onToast }: { statut: StatutIdentite; o
           <select
             value={typeDocument}
             onChange={(e) => setTypeDocument(e.target.value as TypeDocument)}
-            className="h-12 w-full rounded-xl border bg-white px-3 text-sm text-[#52635a] outline-none"
+            className="h-12 w-full rounded-xl border bg-card px-3 text-sm text-foreground outline-none"
           >
             <option value="CARTE_NATIONALE">Carte nationale d’identité</option>
             <option value="PASSEPORT">Passeport</option>
@@ -232,7 +232,7 @@ function ModalIdentite({ statut, onClose, onToast }: { statut: StatutIdentite; o
 
         <div className="mt-5 flex gap-3">
           <Button variant="outline" onClick={onClose} className="flex-1">Fermer</Button>
-          <Button onClick={() => { onToast("Document soumis"); onClose(); }} className="flex-1 bg-[#237e56] hover:bg-[#1c6847]" disabled={!recto}>
+          <Button onClick={() => { onToast("Document soumis"); onClose(); }} className="flex-1" disabled={!recto}>
             Soumettre
           </Button>
         </div>

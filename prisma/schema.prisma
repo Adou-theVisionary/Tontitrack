@@ -21,6 +21,34 @@ enum RolePlateforme {
   ADMIN_AUDIT
 }
 
+enum StatutAdministrationTontine {
+  ACTIVE
+  SUSPENDUE
+}
+
+enum StatutLitigeAdministration {
+  OUVERT
+  EN_EXAMEN
+  EN_ATTENTE_INFORMATION
+  RESOLU
+  REJETE
+  CLOTURE
+}
+
+enum StatutIncidentAdministration {
+  OUVERT
+  EN_COURS
+  RESOLU
+  CLOTURE
+}
+
+enum PrioriteIncidentAdministration {
+  BASSE
+  NORMALE
+  HAUTE
+  CRITIQUE
+}
+
 enum TypeEspace {
   PERSONNEL
   ACTIVITE
@@ -225,6 +253,12 @@ model Utilisateur {
   notifications         Notification[]
   evenementsAudit       EvenementAudit[]          @relation("ActeurAudit")
   rolesPlateforme       AttributionRolePlateforme[]
+  rolesPersonnalises    AttributionRolePersonnalise[]
+  tontinesSuspendues    Tontine[]                  @relation("TontinesSuspenduesPar")
+  litigesOuverts        LitigeAdministration[]     @relation("LitigesOuvertsPar")
+  litigesPrisEnCharge   LitigeAdministration[]     @relation("LitigesPrisEnChargePar")
+  evenementsLitige      EvenementLitigeAdministration[]
+  incidentsAssignes     IncidentAdministration[]   @relation("IncidentsAssignesA")
   operations            OperationSynchronisation[]
 }
 
@@ -238,6 +272,39 @@ model AttributionRolePlateforme {
   utilisateur   Utilisateur     @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
   @@unique([utilisateurId, role])
   @@index([role, creeLe])
+}
+
+/// Les rôles personnalisés ne remplacent jamais les rôles système critiques.
+model RolePersonnalise {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  nom          String
+  description  String?
+  creeLe       DateTime @default(now())
+  modifieLe    DateTime @updatedAt
+  permissions  PermissionRolePersonnalise[]
+  attributions AttributionRolePersonnalise[]
+}
+
+model PermissionRolePersonnalise {
+  id        String           @id @default(cuid())
+  roleId    String
+  permission String
+  role      RolePersonnalise @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  @@unique([roleId, permission])
+  @@index([permission])
+}
+
+model AttributionRolePersonnalise {
+  id            String           @id @default(cuid())
+  utilisateurId String
+  roleId        String
+  attribueParId String?
+  creeLe        DateTime         @default(now())
+  utilisateur   Utilisateur      @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  role          RolePersonnalise @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  @@unique([utilisateurId, roleId])
+  @@index([roleId, creeLe])
 }
 
 model Profil {
@@ -294,6 +361,7 @@ model Fichier {
   tailleOctets    Int
   cleStockage     String            @unique
   creeLe          DateTime          @default(now())
+  preuvesLitiges  EvenementLitigeAdministration[]
   proprietaire    Utilisateur       @relation(fields: [proprietaireId], references: [id], onDelete: Cascade)
   avatarProfil    Profil?           @relation("AvatarProfil")
   preuvesCotisation PreuveCotisation[]
@@ -375,6 +443,11 @@ model Tontine {
   createurId             String
   mode                   ModeTontine
   statut                 StatutTontine           @default(EN_PREPARATION)
+  statutAdministration   StatutAdministrationTontine @default(ACTIVE)
+  suspendueLe            DateTime?
+  suspendueParId         String?
+  motifSuspension        String?
+  statutAvantSuspension  StatutTontine?
   nombreParticipantsRequis Int
   montantCotisation      Decimal                 @db.Decimal(18, 2)
   devise                 String                  @default("XOF")
@@ -399,6 +472,7 @@ model Tontine {
   creeLe                 DateTime                @default(now())
   modifieLe              DateTime                @updatedAt
   createur               Utilisateur             @relation("TontinesCreees", fields: [createurId], references: [id])
+  suspenduePar           Utilisateur?            @relation("TontinesSuspenduesPar", fields: [suspendueParId], references: [id], onDelete: SetNull)
   membres                MembreTontine[]
   invitations            InvitationTontine[]
   demandesAdhesion       DemandeAdhesion[]
@@ -406,8 +480,10 @@ model Tontine {
   rotations              Rotation[]
   cotisations            Cotisation[]
   reversements           DeclarationVersement[]
+  litigesAdministration  LitigeAdministration[]
   rapportCloture         RapportClotureTontine?
   @@index([createurId, statut])
+  @@index([statutAdministration, statut])
 }
 
 /// Instantané immuable produit seulement après tous les contrôles de clôture.
@@ -687,6 +763,84 @@ model EvenementAudit {
   acteur        Utilisateur?         @relation("ActeurAudit", fields: [acteurId], references: [id], onDelete: SetNull)
   @@index([entiteType, entiteId, creeLe])
   @@index([acteurId, creeLe])
+}
+
+/// Registre des seules capacités administrables réellement livrées par un module.
+model ConfigurationModulePlateforme {
+  id          String   @id @default(cuid())
+  moduleId    String   @unique
+  estActive   Boolean  @default(true)
+  parametres  Json?
+  modifieLe   DateTime @updatedAt
+}
+
+/// Les paramètres globaux sont typés par le registre serveur ; aucune variable d'environnement n'est stockée ici.
+model ParametrePlateforme {
+  id          String   @id @default(cuid())
+  cle         String   @unique
+  valeur      Json
+  modifieParId String?
+  creeLe      DateTime @default(now())
+  modifieLe   DateTime @updatedAt
+}
+
+model LitigeAdministration {
+  id                  String                         @id @default(cuid())
+  tontineId           String?
+  type                String
+  statut              StatutLitigeAdministration     @default(OUVERT)
+  titre               String
+  description         String?
+  operationType       String?
+  operationId         String?
+  ouvertParId         String
+  prisEnChargeParId   String?
+  creeLe              DateTime                       @default(now())
+  modifieLe           DateTime                       @updatedAt
+  fermeLe             DateTime?
+  tontine             Tontine?                       @relation(fields: [tontineId], references: [id], onDelete: SetNull)
+  ouvertPar           Utilisateur                    @relation("LitigesOuvertsPar", fields: [ouvertParId], references: [id])
+  prisEnChargePar     Utilisateur?                   @relation("LitigesPrisEnChargePar", fields: [prisEnChargeParId], references: [id])
+  evenements          EvenementLitigeAdministration[]
+  @@index([statut, creeLe])
+  @@index([tontineId, statut])
+}
+
+model EvenementLitigeAdministration {
+  id          String                  @id @default(cuid())
+  litigeId    String
+  acteurId    String
+  action      String
+  ancienStatut StatutLitigeAdministration?
+  nouveauStatut StatutLitigeAdministration?
+  note        String?
+  fichierId   String?
+  creeLe      DateTime                @default(now())
+  litige      LitigeAdministration    @relation(fields: [litigeId], references: [id], onDelete: Cascade)
+  acteur      Utilisateur             @relation(fields: [acteurId], references: [id])
+  fichier     Fichier?                @relation(fields: [fichierId], references: [id], onDelete: SetNull)
+  @@index([litigeId, creeLe])
+}
+
+model IncidentAdministration {
+  id          String                       @id @default(cuid())
+  type        String
+  priorite    PrioriteIncidentAdministration @default(NORMALE)
+  statut      StatutIncidentAdministration  @default(OUVERT)
+  titre       String
+  description String?
+  module      String?
+  entiteType  String?
+  entiteId    String?
+  auditId     String?
+  assigneAId  String?
+  resolution  String?
+  creeLe      DateTime                     @default(now())
+  modifieLe   DateTime                     @updatedAt
+  resoluLe    DateTime?
+  assigneA    Utilisateur?                 @relation("IncidentsAssignesA", fields: [assigneAId], references: [id], onDelete: SetNull)
+  @@index([statut, priorite, creeLe])
+  @@index([module, creeLe])
 }
 
 model OperationSynchronisation {

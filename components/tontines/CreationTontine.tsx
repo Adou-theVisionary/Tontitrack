@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Users, Calendar, Settings2, ListOrdered } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
@@ -99,6 +99,7 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
   const [erreursChamps, setErreursChamps] = useState<ErreursFormulaire>({});
   const [chargement, setChargement] = useState(false);
   const [showIdentite, setShowIdentite] = useState(false);
+  const creationEnCours = useRef(false);
 
   const modifierChamp = <Champ extends keyof FormulaireCreation>(champ: Champ, valeur: FormulaireCreation[Champ]) => {
     setForm((courant) => ({ ...courant, [champ]: valeur }));
@@ -125,6 +126,7 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
   };
 
   const handleCreer = async () => {
+    if (creationEnCours.current) return;
     const erreurs = validerFormulaire(form);
     if (Object.keys(erreurs).length > 0) {
       const premierChamp = Object.keys(erreurs)[0] as ChampFormulaire;
@@ -134,6 +136,7 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
       return;
     }
 
+    creationEnCours.current = true;
     setChargement(true);
     setErreur("");
     try {
@@ -165,6 +168,7 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
         setErreur("Une erreur est survenue lors de la création.");
       }
     } finally {
+      creationEnCours.current = false;
       setChargement(false);
     }
   };
@@ -173,21 +177,21 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
 
   return (
     <div className="space-y-6">
-      <button onClick={onRetour} className="flex items-center gap-2 text-sm text-[#728078] hover:text-[#237e56]">
+      <button onClick={onRetour} className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-primary">
         <ArrowLeft size={16} /> Retour aux tontines
       </button>
 
       <div>
-        <h2 className="text-xl font-semibold text-[#20392d]">Créer une tontine</h2>
+        <h2 className="text-xl font-semibold text-foreground">Créer une tontine</h2>
         <p className="mt-1 text-sm text-muted-foreground">Configurez votre tontine en quelques étapes.</p>
       </div>
 
       {/* Progression */}
-      <div className="flex items-center gap-1 sm:gap-2">
+      <div aria-label={`Étape ${etape} sur ${etapes.length}`} className="flex items-center gap-1 sm:gap-2">
         {etapes.map((etapeItem, index) => (
           <div key={etapeItem.numero} className="flex flex-1 items-center gap-1 sm:gap-2">
             <div className={`flex flex-col items-center gap-1.5 ${etape > index + 1 ? "text-[#237e56]" : etape === etapeItem.numero ? "text-[#237e56]" : "text-[#98a099]"}`}>
-              <div className={`grid h-9 w-9 place-items-center rounded-full border-2 text-xs font-bold transition ${
+              <div className={`grid h-9 w-9 place-items-center rounded-full border-2 text-xs font-bold transition-[background-color,border-color,color,transform] duration-200 [transition-timing-function:var(--easing-naturel)] motion-reduce:transition-none ${
                 etape > index + 1 ? "border-[#237e56] bg-[#237e56] text-white" :
                 etape === etapeItem.numero ? "border-[#237e56] bg-white text-[#237e56]" :
                 "border-[#dcdad4] bg-white text-[#98a099]"
@@ -203,13 +207,13 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
         ))}
       </div>
 
-      {erreur && <div className="rounded-xl bg-[#fdebea] px-4 py-3 text-sm text-[#a53d39]">{erreur}</div>}
+      {erreur && <div role="alert" className="retour-validation rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{erreur}</div>}
 
-      <div className="rounded-2xl border bg-white p-6">
+      <div className="rounded-2xl border bg-card p-4 sm:p-6">
         {/* Étape 1: Informations */}
         {etape === 1 && (
           <div className="space-y-5">
-            <h3 className="font-semibold text-[#20392d]">Informations générales</h3>
+            <h3 className="font-semibold text-foreground">Informations générales</h3>
             <div>
               <label htmlFor="nom" className="mb-2 block text-sm font-medium text-[#405247]">Nom de la tontine</label>
               <input
@@ -219,9 +223,9 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                 placeholder="Ex. Tontine Solidarité"
                 aria-invalid={Boolean(erreursChamps.nom)}
                 aria-describedby={erreursChamps.nom ? "erreur-nom" : undefined}
-                className={`h-12 w-full rounded-xl border bg-white px-4 text-sm outline-none ring-[#9ed0ae] focus:ring-2 ${erreursChamps.nom ? "border-[#a53d39]" : ""}`}
+                className={`h-12 w-full rounded-xl border bg-card px-4 text-sm outline-none focus:ring-2 focus:ring-ring ${erreursChamps.nom ? "border-destructive" : ""}`}
               />
-              {erreursChamps.nom && <p id="erreur-nom" className="mt-1 text-xs text-[#a53d39]">{erreursChamps.nom}</p>}
+              {erreursChamps.nom && <p id="erreur-nom" className="retour-validation mt-1 text-xs text-[#a53d39]">{erreursChamps.nom}</p>}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -236,9 +240,9 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                   onChange={(e) => modifierChamp("nombreParticipantsRequis", Number(e.target.value))}
                   aria-invalid={Boolean(erreursChamps.nombreParticipantsRequis)}
                   aria-describedby={erreursChamps.nombreParticipantsRequis ? "erreur-nombre-participants" : undefined}
-                  className={`h-12 w-full rounded-xl border bg-white px-4 text-sm outline-none ring-[#9ed0ae] focus:ring-2 ${erreursChamps.nombreParticipantsRequis ? "border-[#a53d39]" : ""}`}
+                  className={`h-12 w-full rounded-xl border bg-card px-4 text-sm outline-none focus:ring-2 focus:ring-ring ${erreursChamps.nombreParticipantsRequis ? "border-destructive" : ""}`}
                 />
-                {erreursChamps.nombreParticipantsRequis && <p id="erreur-nombre-participants" className="mt-1 text-xs text-[#a53d39]">{erreursChamps.nombreParticipantsRequis}</p>}
+                {erreursChamps.nombreParticipantsRequis && <p id="erreur-nombre-participants" className="retour-validation mt-1 text-xs text-[#a53d39]">{erreursChamps.nombreParticipantsRequis}</p>}
               </div>
               <div>
                 <label htmlFor="montantCotisation" className="mb-2 block text-sm font-medium text-[#405247]">Montant de cotisation (XOF)</label>
@@ -253,9 +257,9 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                   placeholder="100000"
                   aria-invalid={Boolean(erreursChamps.montantCotisation)}
                   aria-describedby={erreursChamps.montantCotisation ? "erreur-montant" : undefined}
-                  className={`h-12 w-full rounded-xl border bg-white px-4 text-sm outline-none ring-[#9ed0ae] focus:ring-2 ${erreursChamps.montantCotisation ? "border-[#a53d39]" : ""}`}
+                  className={`h-12 w-full rounded-xl border bg-card px-4 text-sm outline-none focus:ring-2 focus:ring-ring ${erreursChamps.montantCotisation ? "border-destructive" : ""}`}
                 />
-                {erreursChamps.montantCotisation && <p id="erreur-montant" className="mt-1 text-xs text-[#a53d39]">{erreursChamps.montantCotisation}</p>}
+                {erreursChamps.montantCotisation && <p id="erreur-montant" className="retour-validation mt-1 text-xs text-[#a53d39]">{erreursChamps.montantCotisation}</p>}
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -264,7 +268,7 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                 <select
                   value={form.frequence}
                   onChange={(e) => modifierChamp("frequence", e.target.value as FrequenceTontine)}
-                  className="h-12 w-full rounded-xl border bg-white px-3 text-sm text-[#52635a] outline-none"
+                  className="h-12 w-full rounded-xl border bg-card px-3 text-sm text-foreground outline-none"
                 >
                   <option value="QUOTIDIENNE">Quotidienne</option>
                   <option value="HEBDOMADAIRE">Hebdomadaire</option>
@@ -281,9 +285,9 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                   onChange={(e) => modifierChamp("dateCommencement", e.target.value)}
                   aria-invalid={Boolean(erreursChamps.dateCommencement)}
                   aria-describedby={erreursChamps.dateCommencement ? "erreur-date" : undefined}
-                  className={`h-12 w-full rounded-xl border bg-white px-3 text-sm text-[#52635a] outline-none ${erreursChamps.dateCommencement ? "border-[#a53d39]" : ""}`}
+                  className={`h-12 w-full rounded-xl border bg-card px-3 text-sm text-foreground outline-none ${erreursChamps.dateCommencement ? "border-destructive" : ""}`}
                 />
-                {erreursChamps.dateCommencement && <p id="erreur-date" className="mt-1 text-xs text-[#a53d39]">{erreursChamps.dateCommencement}</p>}
+                {erreursChamps.dateCommencement && <p id="erreur-date" className="retour-validation mt-1 text-xs text-[#a53d39]">{erreursChamps.dateCommencement}</p>}
               </div>
             </div>
             <div>
@@ -294,7 +298,7 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                 onChange={(e) => modifierChamp("fuseauHoraire", e.target.value)}
                 aria-invalid={Boolean(erreursChamps.fuseauHoraire)}
                 aria-describedby={erreursChamps.fuseauHoraire ? "erreur-fuseau" : undefined}
-                className={`h-12 w-full rounded-xl border bg-white px-3 text-sm text-[#52635a] outline-none ${erreursChamps.fuseauHoraire ? "border-[#a53d39]" : ""}`}
+                className={`h-12 w-full rounded-xl border bg-card px-3 text-sm text-foreground outline-none ${erreursChamps.fuseauHoraire ? "border-destructive" : ""}`}
               >
                 <option value="Africa/Niamey">Africa/Niamey</option>
                 <option value="Africa/Abidjan">Africa/Abidjan</option>
@@ -302,7 +306,7 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                 <option value="Africa/Bamako">Africa/Bamako</option>
                 <option value="Europe/Paris">Europe/Paris</option>
               </select>
-              {erreursChamps.fuseauHoraire && <p id="erreur-fuseau" className="mt-1 text-xs text-[#a53d39]">{erreursChamps.fuseauHoraire}</p>}
+              {erreursChamps.fuseauHoraire && <p id="erreur-fuseau" className="retour-validation mt-1 text-xs text-[#a53d39]">{erreursChamps.fuseauHoraire}</p>}
             </div>
           </div>
         )}
@@ -320,8 +324,8 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                 <button
                   key={mode}
                   onClick={() => modifierChamp("mode", mode)}
-                  className={`w-full rounded-2xl border-2 p-5 text-left transition ${
-                    form.mode === mode ? "border-[#237e56] bg-[#f1f9f2]" : "border-[#e5e4df] bg-white hover:border-[#c5dcc9]"
+                  className={`w-full rounded-2xl border-2 p-5 text-left transition-[background-color,border-color,box-shadow,transform] duration-200 [transition-timing-function:var(--easing-naturel)] active:scale-[.99] motion-reduce:transform-none motion-reduce:transition-none ${
+                    form.mode === mode ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -337,9 +341,9 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
               ))}
             </div>
             {/* Explication dynamique */}
-            <div className="rounded-xl bg-[#f1f8f2] p-4">
-              <p className="text-sm font-semibold text-[#28583c]">Avec {form.nombreParticipantsRequis} membres :</p>
-              <p className="mt-2 text-sm text-[#537362]">
+            <div className="rounded-xl bg-primary/10 p-4">
+              <p className="text-sm font-semibold text-foreground">Avec {form.nombreParticipantsRequis} membres :</p>
+              <p className="mt-2 text-sm text-muted-foreground">
                 Nombre de tours : <b>{nombreTours}</b>
               </p>
               {form.mode === "TOURNANT_EXCLU" && (
@@ -394,8 +398,8 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                 Un code d’invitation sera généré à la création. Partagez-le avec les participants.
               </p>
             </div>
-            <div className="rounded-xl bg-[#fff8e1] p-4">
-              <p className="text-sm text-[#8a6300]">
+            <div className="rounded-xl bg-warning/15 p-4">
+              <p className="text-sm text-warning">
                 Places restantes : <b>{form.nombreParticipantsRequis - 1}</b> membre(s) à inviter.
               </p>
             </div>
@@ -416,13 +420,13 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
                   Définissez l’ordre dans lequel les membres recevront les cotisations. Vous pourrez modifier cet ordre jusqu’au démarrage.
                 </p>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-3 rounded-xl border bg-white p-3">
+                  <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-white p-3">
                     <span className="grid h-8 w-8 place-items-center rounded-full bg-[#237e56] text-sm font-bold text-white">1</span>
                     <div className="grid h-9 w-9 place-items-center rounded-full bg-[#d4eadb] text-xs font-bold text-[#207b54]">{utilisateur?.prenom?.[0]}{utilisateur?.nom?.[0]}</div>
-                    <span className="text-sm font-medium text-[#405247]">{utilisateur?.prenom} {utilisateur?.nom}</span>
+                    <span className="min-w-0 break-words text-sm font-medium text-[#405247]">{utilisateur?.prenom} {utilisateur?.nom}</span>
                   </div>
                   {Array.from({ length: form.nombreParticipantsRequis - 1 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 rounded-xl border bg-white p-3">
+                    <div key={i} className="flex min-w-0 items-center gap-3 rounded-xl border bg-white p-3">
                       <span className="grid h-8 w-8 place-items-center rounded-full bg-[#f0f3ed] text-sm font-bold text-[#98a099]">{i + 2}</span>
                       <div className="grid h-9 w-9 place-items-center rounded-full bg-[#f0f3ed] text-xs text-[#98a099]">?</div>
                       <span className="text-sm text-[#98a099]">Membre à inviter</span>
@@ -451,7 +455,7 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
               <Row label="Date de commencement" value={form.dateCommencement} />
               <Row label="Fuseau horaire" value={form.fuseauHoraire} />
             </div>
-            <div className="rounded-xl bg-[#fff8e1] p-4 text-sm text-[#8a6300]">
+            <div className="rounded-xl bg-warning/15 p-4 text-sm text-warning">
               Un code d’invitation sera généré pour permettre aux membres de demander à rejoindre la tontine.
             </div>
           </div>
@@ -465,11 +469,11 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
             </Button>
           )}
           {etape < 5 ? (
-            <Button onClick={handleSuivant} className="flex-1 bg-[#237e56] hover:bg-[#1c6847]">
+            <Button onClick={handleSuivant} className="flex-1">
               Suivant <ArrowRight size={16} className="ml-1" />
             </Button>
           ) : (
-            <Button onClick={handleCreer} disabled={chargement} className="flex-1 bg-[#237e56] hover:bg-[#1c6847]">
+            <Button onClick={handleCreer} disabled={chargement} className="flex-1">
               {chargement ? "Création..." : "Créer la tontine"} {!chargement && <Check size={16} className="ml-1" />}
             </Button>
           )}
@@ -492,9 +496,9 @@ export function CreationTontine({ onRetour, onCreee }: { onRetour: () => void; o
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between text-sm">
+    <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold text-[#405247]">{value}</span>
+      <span className="break-words font-semibold text-[#405247] sm:text-right">{value}</span>
     </div>
   );
 }

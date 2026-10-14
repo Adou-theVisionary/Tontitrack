@@ -76,7 +76,7 @@ export function CotisationsTontine({ tontineId, estCreateur }: { tontineId: stri
   if (!cotisations.length) return <div className="rounded-2xl border bg-white p-8 text-center"><CreditCard size={32} className="mx-auto text-[#9bc8aa]" /><p className="mt-3 text-sm font-medium text-[#405247]">Aucune cotisation disponible.</p></div>;
 
   return <div className="space-y-4">
-    <div className="flex items-center justify-between gap-3"><p className="text-sm text-muted-foreground">Déclaré et confirmé restent distincts.</p><Button variant="outline" onClick={() => void charger()} className="text-xs"><RefreshCw size={14} /> Actualiser</Button></div>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="text-sm text-muted-foreground">Déclaré et confirmé restent distincts.</p><Button variant="outline" onClick={() => void charger()} className="w-full text-xs sm:w-auto"><RefreshCw size={14} /> Actualiser</Button></div>
     {erreur && <p role="alert" className="rounded-xl bg-[#fdebea] p-3 text-sm text-[#a53d39]">{erreur}</p>}
     {cotisations.map((cotisation) => {
       const attendu = Number(cotisation.montantAttendu); const confirme = Number(cotisation.montantValide); const reste = Math.max(0, attendu - confirme);

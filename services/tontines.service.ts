@@ -37,6 +37,7 @@ async function expirerInvitations(filtre: { id?: string; tontineId?: string; inv
 async function exigerCreateur(tontineId: string, utilisateurId: string) {
   const tontine = await prisma.tontine.findFirst({ where: { id: tontineId, createurId: utilisateurId } });
   if (!tontine) throw new ErreurTontine("NON_AUTORISE", "Cette action est réservée au créateur.", 403);
+  if (tontine.statutAdministration === "SUSPENDUE") throw new ErreurTontine("TONTINE_SUSPENDUE", "Cette tontine est suspendue administrativement.", 409);
   if (tontine.reglesVerrouilleesLe || tontine.statut !== "EN_PREPARATION") throw new ErreurTontine("TONTINE_VERROUILLEE", "Ces règles ne sont plus modifiables.", 409);
   return tontine;
 }
@@ -132,7 +133,7 @@ function conditionsDemarrage(tontine: {
 async function obtenirDonneesDemarrage(transaction: Transaction, tontineId: string) {
   const tontine = await transaction.tontine.findUnique({
     where: { id: tontineId },
-    select: { id: true, createurId: true, statut: true, mode: true, montantCotisation: true, frequence: true, nombreParticipantsRequis: true, nombreTours: true, modeDemarrage: true, methodeOrdre: true, dateCommencement: true },
+    select: { id: true, createurId: true, statut: true, statutAdministration: true, mode: true, montantCotisation: true, frequence: true, nombreParticipantsRequis: true, nombreTours: true, modeDemarrage: true, methodeOrdre: true, dateCommencement: true },
   });
   if (!tontine) throw new ErreurTontine("INTROUVABLE", "Tontine introuvable.", 404);
   const [membres, ordre, rotations] = await Promise.all([
@@ -263,6 +264,7 @@ export const tontinesService = {
     return prisma.$transaction(async (transaction) => {
       let contexte = await obtenirDonneesDemarrage(transaction, tontineId);
       if (contexte.tontine.createurId !== createurId) throw new ErreurTontine("NON_AUTORISE", "Cette action est réservée au créateur.", 403);
+      if (contexte.tontine.statutAdministration === "SUSPENDUE") throw new ErreurTontine("TONTINE_SUSPENDUE", "Le démarrage est bloqué tant que la suspension administrative est active.", 409);
       if (contexte.tontine.modeDemarrage !== declencheur) throw new ErreurTontine("MODE_DEMARRAGE_INCOMPATIBLE", "Le mode de démarrage configuré ne permet pas cette action.", 409);
       if (declencheur === "AUTOMATIQUE" && contexte.tontine.dateCommencement > new Date()) throw new ErreurTontine("DATE_DEMARRAGE_NON_ATTEINTE", "La date de démarrage automatique n'est pas encore atteinte.", 409);
       if (contexte.tontine.mode !== "FIXE_CREATEUR" && contexte.tontine.methodeOrdre === "ALEATOIRE" && contexte.ordre.length === 0 && contexte.membres.length === contexte.tontine.nombreParticipantsRequis) {
@@ -360,11 +362,12 @@ export const tontinesService = {
     return prisma.$transaction(async (transaction) => {
       const cotisation = await transaction.cotisation.findFirst({
         where: { id: cotisationId, tontineId },
-        include: { membre: { select: { utilisateurId: true } }, rotation: { select: { statut: true, tontine: { select: { statut: true } } } } },
+        include: { membre: { select: { utilisateurId: true } }, rotation: { select: { statut: true, tontine: { select: { statut: true, statutAdministration: true } } } } },
       });
       if (!cotisation) throw new ErreurTontine("COTISATION_INTROUVABLE", "Cotisation introuvable.", 404);
       if (cotisation.membre.utilisateurId !== declarantId) throw new ErreurTontine("NON_AUTORISE", "Vous ne pouvez déclarer que votre propre cotisation.", 403);
       if (cotisation.rotation.tontine.statut !== "ACTIVE") throw new ErreurTontine("TONTINE_CLOTUREE", "Les opérations financières sont verrouillées après clôture.", 409);
+      if (cotisation.rotation.tontine.statutAdministration === "SUSPENDUE") throw new ErreurTontine("TONTINE_SUSPENDUE", "Les opérations financières sont suspendues par l’administration.", 409);
       if (cotisation.rotation.statut !== "EN_COURS") throw new ErreurTontine("ROTATION_INACTIVE", "Cette rotation n'accepte pas encore de déclaration.", 409);
       if (cotisation.statut === "NON_CONCERNE" || cotisation.statut === "PAYEE") throw new ErreurTontine("COTISATION_NON_DUE", "Cette cotisation ne peut pas être déclarée.", 409);
       const montant = new Prisma.Decimal(donnees.montant);
@@ -401,10 +404,11 @@ export const tontinesService = {
     return prisma.$transaction(async (transaction) => {
       const declaration = await transaction.declarationCotisation.findFirst({
         where: { id: declarationId, cotisation: { tontineId, tontine: { createurId } } },
-        include: { cotisation: { include: { rotation: { include: { tontine: { select: { delaiGraceJours: true, statut: true } } } } } } },
+        include: { cotisation: { include: { rotation: { include: { tontine: { select: { delaiGraceJours: true, statut: true, statutAdministration: true } } } } } } },
       });
       if (!declaration) throw new ErreurTontine("NON_AUTORISE", "Déclaration introuvable ou non autorisée.", 403);
       if (declaration.cotisation.rotation.tontine.statut !== "ACTIVE") throw new ErreurTontine("TONTINE_CLOTUREE", "Les opérations financières sont verrouillées après clôture.", 409);
+      if (declaration.cotisation.rotation.tontine.statutAdministration === "SUSPENDUE") throw new ErreurTontine("TONTINE_SUSPENDUE", "Les opérations financières sont suspendues par l’administration.", 409);
       if (declaration.statut !== "EN_ATTENTE_VALIDATION") throw new ErreurTontine("DECLARATION_TRAITEE", "Cette déclaration a déjà été traitée.", 409);
       const decision = await transaction.declarationCotisation.updateMany({
         where: { id: declarationId, statut: "EN_ATTENTE_VALIDATION" },
@@ -534,11 +538,12 @@ export const tontinesService = {
 
       const rotation = await transaction.rotation.findFirst({
         where: { id: rotationId, tontineId },
-        include: { tontine: { select: { createurId: true, reversementsPartielsAutorises: true, statut: true } }, versements: { select: { montant: true, statut: true } }, beneficiaire: { select: { utilisateurId: true } } },
+        include: { tontine: { select: { createurId: true, reversementsPartielsAutorises: true, statut: true, statutAdministration: true } }, versements: { select: { montant: true, statut: true } }, beneficiaire: { select: { utilisateurId: true } } },
       });
       if (!rotation) throw new ErreurTontine("ROTATION_INTROUVABLE", "Rotation introuvable.", 404);
       if (rotation.tontine.createurId !== createurId) throw new ErreurTontine("NON_AUTORISE", "Seul le créateur peut déclarer un reversement.", 403);
       if (rotation.tontine.statut !== "ACTIVE" || !["EN_COURS", "EN_ATTENTE_VERSEMENT", "EN_ATTENTE_CONFIRMATION"].includes(rotation.statut)) throw new ErreurTontine("ROTATION_INELIGIBLE", "Cette rotation n'accepte pas de reversement.", 409);
+      if (rotation.tontine.statutAdministration === "SUSPENDUE") throw new ErreurTontine("TONTINE_SUSPENDUE", "Les reversements sont suspendus par l’administration.", 409);
       const montant = new Prisma.Decimal(donnees.montant);
       const montantDejaReserve = sommeMontants(rotation.versements.filter((versement) => versement.statut !== "CONTESTE"));
       const disponible = rotation.montantValide.sub(montantDejaReserve);
@@ -589,11 +594,12 @@ export const tontinesService = {
 
       const declaration = await transaction.declarationVersement.findFirst({
         where: { id: declarationId, tontineId },
-        include: { confirmationReception: true, rotation: { include: { beneficiaire: { select: { utilisateurId: true } }, tontine: { select: { createurId: true, statut: true } } } } },
+        include: { confirmationReception: true, rotation: { include: { beneficiaire: { select: { utilisateurId: true } }, tontine: { select: { createurId: true, statut: true, statutAdministration: true } } } } },
       });
       if (!declaration) throw new ErreurTontine("REVERSEMENT_INTROUVABLE", "Reversement introuvable.", 404);
       if (declaration.rotation.beneficiaire.utilisateurId !== beneficiaireId) throw new ErreurTontine("NON_AUTORISE", "Seul le bénéficiaire de cette rotation peut confirmer la réception.", 403);
       if (declaration.rotation.tontine.statut !== "ACTIVE") throw new ErreurTontine("TONTINE_CLOTUREE", "Les opérations financières sont verrouillées après clôture.", 409);
+      if (declaration.rotation.tontine.statutAdministration === "SUSPENDUE") throw new ErreurTontine("TONTINE_SUSPENDUE", "Les reversements sont suspendus par l’administration.", 409);
       if (declaration.statut !== "DECLARE" || declaration.confirmationReception) throw new ErreurTontine("REVERSEMENT_DEJA_TRAITE", "Ce reversement a déjà reçu une décision.", 409);
 
       if (donnees.decision === "CONTESTER") {
@@ -819,6 +825,7 @@ export const tontinesService = {
       if (!invitation) throw new ErreurTontine("INVITATION_INTROUVABLE", "Invitation introuvable.", 404);
       if (invitation.expireLe <= new Date()) throw new ErreurTontine("INVITATION_EXPIREE", "Cette invitation a expiré.", 409);
       if (!invitation.estActive || invitation.statut !== "EN_ATTENTE") throw new ErreurTontine("INVITATION_INVALIDE", "Invitation invalide.", 409);
+      if (invitation.tontine.statutAdministration === "SUSPENDUE") throw new ErreurTontine("TONTINE_SUSPENDUE", "Les adhésions sont suspendues par l’administration.", 409);
       if (invitation.inviteId && invitation.inviteId !== utilisateurId) throw new ErreurTontine("NON_AUTORISE", "Cette invitation est destinée à un autre utilisateur.", 403);
       if (!invitation.inviteId && !jetonInvitationValide(donnees?.jeton, invitation.jetonHash)) throw new ErreurTontine("NON_AUTORISE", "Jeton d'invitation invalide.", 403);
       if (!accepter) {
@@ -938,6 +945,7 @@ export const tontinesService = {
   async demanderAdhesion(tontineId: string, demandeurId: string, donnees: z.infer<typeof demandeSchema>) {
     const tontine = await prisma.tontine.findUnique({ where: { id: tontineId }, include: { _count: { select: { membres: { where: { statut: "APPROUVE" } } } } } });
     if (!tontine || tontine.visibilite !== "PUBLIQUE" || tontine.adhesionsFermees || tontine.strategieAdhesion === "INVITATION") throw new ErreurTontine("ADHESION_FERMEE", "Cette tontine n'accepte pas les demandes.", 409);
+    if (tontine.statutAdministration === "SUSPENDUE") throw new ErreurTontine("TONTINE_SUSPENDUE", "Les adhésions sont suspendues par l’administration.", 409);
     if (tontine._count.membres >= tontine.nombreParticipantsRequis) throw new ErreurTontine("CAPACITE_ATTEINTE", "Aucune place disponible.", 409);
     const empreinteConditions = hash(JSON.stringify({ mode: tontine.mode, montant: tontine.montantCotisation.toString(), frequence: tontine.frequence, versionConditions }));
     return prisma.demandeAdhesion.upsert({ where: { tontineId_demandeurId: { tontineId, demandeurId } }, create: { tontineId, demandeurId, motif: donnees.motif, consentementAccepteLe: new Date(), versionConditions, empreinteConditions }, update: { statut: "EN_ATTENTE", motif: donnees.motif, decideLe: null, decideParId: null, consentementAccepteLe: new Date(), versionConditions, empreinteConditions } });
@@ -946,6 +954,7 @@ export const tontinesService = {
     return prisma.$transaction(async (transaction) => {
       const demande = await transaction.demandeAdhesion.findUnique({ where: { id: demandeId }, include: { tontine: { include: { _count: { select: { membres: { where: { statut: "APPROUVE" } } } } } } } });
       if (!demande || demande.tontine.createurId !== createurId) throw new ErreurTontine("NON_AUTORISE", "Demande introuvable ou non autorisée.", 403);
+      if (demande.tontine.statutAdministration === "SUSPENDUE") throw new ErreurTontine("TONTINE_SUSPENDUE", "Les adhésions sont suspendues par l’administration.", 409);
       if (demande.statut !== "EN_ATTENTE") throw new ErreurTontine("DEMANDE_TRAITEE", "Cette demande a déjà été traitée.", 409);
       if (approuver && demande.tontine._count.membres >= demande.tontine.nombreParticipantsRequis) throw new ErreurTontine("CAPACITE_ATTEINTE", "Aucune place disponible.", 409);
       if (approuver) await transaction.membreTontine.upsert({ where: { tontineId_utilisateurId: { tontineId: demande.tontineId, utilisateurId: demande.demandeurId } }, create: { tontineId: demande.tontineId, utilisateurId: demande.demandeurId, statut: "APPROUVE", approuveLe: new Date() }, update: { statut: "APPROUVE", approuveLe: new Date(), retireLe: null } });

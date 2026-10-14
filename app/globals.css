@@ -7,6 +7,11 @@
   --foreground: 155 22% 17%;
   --card: 0 0% 100%;
   --card-foreground: 155 22% 17%;
+  --surface: 40 28% 95%;
+  --surface-raised: 0 0% 100%;
+  --surface-subtle: 40 25% 94%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 155 22% 17%;
   --primary: 153 57% 38%;
   --primary-foreground: 0 0% 100%;
   --primary-soft: 150 42% 94%;
@@ -20,16 +25,88 @@
   --warning: 39 86% 48%;
   --danger: 4 72% 54%;
   --info: 204 70% 45%;
+  --destructive: 4 72% 54%;
+  --destructive-foreground: 0 0% 100%;
   --border: 40 20% 88%;
   --input: 40 20% 88%;
   --ring: 153 57% 38%;
+  --chart-1: 153 57% 38%;
+  --chart-2: 39 86% 48%;
+  --chart-3: 204 70% 45%;
+  --chart-4: 4 72% 54%;
+  --chart-5: 276 50% 55%;
   --radius: 1rem;
+  --duree-micro-interaction: 150ms;
+  --duree-transition: 200ms;
+  --duree-panneau: 280ms;
+  --easing-naturel: cubic-bezier(.2, .8, .2, 1);
+}
+
+.dark {
+  --background: 155 19% 10%;
+  --foreground: 42 35% 94%;
+  --card: 155 17% 14%;
+  --card-foreground: 42 35% 94%;
+  --surface: 154 16% 12%;
+  --surface-raised: 154 17% 16%;
+  --surface-subtle: 154 14% 18%;
+  --popover: 155 17% 14%;
+  --popover-foreground: 42 35% 94%;
+  --primary: 151 49% 49%;
+  --primary-foreground: 155 25% 10%;
+  --primary-soft: 153 25% 19%;
+  --secondary: 154 14% 20%;
+  --secondary-foreground: 42 35% 94%;
+  --muted: 154 13% 19%;
+  --muted-foreground: 150 11% 70%;
+  --accent: 39 84% 61%;
+  --accent-foreground: 155 25% 10%;
+  --success: 151 49% 49%;
+  --warning: 39 84% 61%;
+  --danger: 5 76% 66%;
+  --info: 204 79% 63%;
+  --destructive: 5 76% 66%;
+  --destructive-foreground: 155 25% 10%;
+  --border: 154 12% 25%;
+  --input: 154 12% 25%;
+  --ring: 151 49% 49%;
+  --chart-1: 151 49% 49%;
+  --chart-2: 39 84% 61%;
+  --chart-3: 204 79% 63%;
+  --chart-4: 5 76% 66%;
+  --chart-5: 276 65% 71%;
 }
 
 * { @apply border-border; }
-html { background: hsl(var(--background)); }
-body { @apply bg-background text-foreground antialiased; }
+html { background: hsl(var(--background)); color-scheme: light; }
+html.dark { color-scheme: dark; }
+body { @apply min-h-screen bg-background text-foreground antialiased; }
 button, a, input, select { -webkit-tap-highlight-color: transparent; }
+button, a, input, select, textarea { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background; }
+button, a { transition: color var(--duree-micro-interaction) var(--easing-naturel), background-color var(--duree-micro-interaction) var(--easing-naturel), border-color var(--duree-micro-interaction) var(--easing-naturel), opacity var(--duree-micro-interaction) var(--easing-naturel); }
+input, select, textarea { transition: border-color var(--duree-micro-interaction) var(--easing-naturel), box-shadow var(--duree-micro-interaction) var(--easing-naturel), background-color var(--duree-micro-interaction) var(--easing-naturel); }
+img, picture, video, canvas { max-width: 100%; }
+input, select, textarea { max-width: 100%; }
+main > * { min-width: 0; }
+
+@layer components {
+  .surface-card { @apply rounded-2xl border border-border bg-card text-card-foreground shadow-sm; }
+  .page-section { @apply space-y-4 sm:space-y-6; }
+  .surface-subtle { background-color: hsl(var(--surface-subtle)); }
+  .surface-raised { background-color: hsl(var(--surface-raised)); }
+  .texte-souple { overflow-wrap: anywhere; }
+  .notification-flottante { max-width: calc(100vw - 2rem); overflow-wrap: anywhere; }
+  .surface-interactive {
+    transition: transform var(--duree-transition) var(--easing-naturel), box-shadow var(--duree-transition) var(--easing-naturel), border-color var(--duree-micro-interaction) var(--easing-naturel), background-color var(--duree-micro-interaction) var(--easing-naturel);
+  }
+  @media (hover: hover) {
+    .surface-interactive:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px hsl(var(--foreground) / .08);
+    }
+  }
+  .retour-validation { animation: retour-validation var(--duree-transition) var(--easing-naturel) both; }
+}
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
@@ -37,10 +114,137 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
   .scrollbar-hide { scrollbar-width: none; }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .rise-in { animation: rise-in .4s ease-out both; }
-  .rise-in-delay-1 { animation-delay: .06s; }
-  .rise-in-delay-2 { animation-delay: .12s; }
-  .rise-in-delay-3 { animation-delay: .18s; }
-  @keyframes rise-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.rise-in { animation: rise-in var(--duree-panneau) var(--easing-naturel) both; }
+.rise-in-delay-1 { animation-delay: .06s; }
+.rise-in-delay-2 { animation-delay: .12s; }
+.rise-in-delay-3 { animation-delay: .18s; }
+@keyframes rise-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes entree-discrete { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes retour-validation { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: translateY(0); } }
+.entree-discrete { animation: entree-discrete var(--duree-transition) var(--easing-naturel) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+
+/* Transition sûre des composants métier encore construits avec la palette historique.
+   Les sélecteurs ne s'appliquent qu'au thème sombre ; la migration source par source
+   reste prioritaire pour les nouvelles interfaces. */
+.dark .bg-white { background-color: hsl(var(--card)) !important; }
+.dark [class*="bg-[#fffefa]"],
+.dark [class*="bg-[#fbfaf7]"],
+.dark [class*="bg-[#f8f7f2]"] { background-color: hsl(var(--background)) !important; }
+.dark [class*="bg-[#f8faf6]"],
+.dark [class*="bg-[#f8fbf8]"],
+.dark [class*="bg-[#fbfcf9]"],
+.dark [class*="bg-[#fcfefb]"],
+.dark [class*="bg-[#f7f8f4]"],
+.dark [class*="bg-[#f1f0eb]"],
+.dark [class*="bg-[#f1f1ed]"],
+.dark [class*="bg-[#f0f1ee]"],
+.dark [class*="bg-[#f0f3ed]"],
+.dark [class*="bg-[#edf0ea]"],
+.dark [class*="bg-[#f0efea]"],
+.dark [class*="bg-[#f0f2ed]"],
+.dark [class*="bg-[#f3f5f0]"],
+.dark [class*="bg-[#e9eee9]"],
+.dark [class*="bg-[#e2ebe3]"],
+.dark [class*="bg-[#dcefe3]"],
+.dark [class*="bg-[#dfe3dc]"],
+.dark [class*="bg-[#e5e4df]"],
+.dark [class*="bg-[#e6e8e1]"] { background-color: hsl(var(--muted)) !important; }
+.dark [class*="bg-[#e8f5ef]"],
+.dark [class*="bg-[#eaf6ef]"],
+.dark [class*="bg-[#edf6ef]"],
+.dark [class*="bg-[#edf8f0]"],
+.dark [class*="bg-[#f1f8f2]"],
+.dark [class*="bg-[#f1f9f2]"] { background-color: hsl(var(--primary) / .14) !important; }
+.dark [class*="bg-[#d4eadb]"],
+.dark [class*="bg-[#d5ebdc]"],
+.dark [class*="bg-[#d8ecde]"],
+.dark [class*="bg-[#d3eadb]"] { background-color: hsl(var(--primary) / .18) !important; }
+.dark [class*="bg-[#e8f2f8]"] { background-color: hsl(var(--info) / .14) !important; }
+.dark [class*="bg-[#f0eaf8]"] { background-color: hsl(var(--chart-5) / .14) !important; }
+.dark [class*="bg-[#fff3d8]"],
+.dark [class*="bg-[#fff3dc]"],
+.dark [class*="bg-[#fff2d4]"],
+.dark [class*="bg-[#fff1df]"],
+.dark [class*="bg-[#fff8e1]"] { background-color: hsl(var(--warning) / .16) !important; }
+.dark [class*="bg-[#fdebea]"],
+.dark [class*="bg-[#fdf6f5]"] { background-color: hsl(var(--destructive) / .14) !important; }
+.dark [class*="bg-[#237e56]"],
+.dark [class*="bg-[#2e9b6b]"],
+.dark [class*="bg-[#399867]"] { background-color: hsl(var(--primary)) !important; }
+.dark [class*="bg-[#dca83e]"],
+.dark [class*="bg-[#dda735]"] { background-color: hsl(var(--warning)) !important; }
+.dark [class*="bg-[#20392d]"] { background-color: hsl(var(--popover)) !important; }
+.dark [class*="border-[#"] { border-color: hsl(var(--border)) !important; }
+.dark [class*="ring-[#"] { --tw-ring-color: hsl(var(--ring)) !important; }
+.dark [class*="shadow-["] { box-shadow: 0 12px 28px rgb(0 0 0 / .28) !important; }
+.dark [class*="text-[#20392d]"],
+.dark [class*="text-[#294237]"],
+.dark [class*="text-[#33453b]"],
+.dark [class*="text-[#35493e]"],
+.dark [class*="text-[#3d5448]"],
+.dark [class*="text-[#405247]"],
+.dark [class*="text-[#33473b]"],
+.dark [class*="text-[#52635a]"],
+.dark [class*="text-[#53625a]"],
+.dark [class*="text-[#537362]"],
+.dark [class*="text-[#24563b]"],
+.dark [class*="text-[#28583c]"] { color: hsl(var(--foreground)) !important; }
+.dark [class*="text-[#657169]"],
+.dark [class*="text-[#606b63]"],
+.dark [class*="text-[#607069]"],
+.dark [class*="text-[#66736b]"],
+.dark [class*="text-[#676b64]"],
+.dark [class*="text-[#68746d]"],
+.dark [class*="text-[#6c8274]"],
+.dark [class*="text-[#6f7e75]"],
+.dark [class*="text-[#718078]"],
+.dark [class*="text-[#71907c]"],
+.dark [class*="text-[#728078]"],
+.dark [class*="text-[#77847b]"],
+.dark [class*="text-[#87918b]"],
+.dark [class*="text-[#859189]"],
+.dark [class*="text-[#8a968e]"],
+.dark [class*="text-[#98a099]"],
+.dark [class*="text-[#9ca8a0]"],
+.dark [class*="text-[#9aaa9e]"],
+.dark [class*="text-[#9bc8aa]"],
+.dark [class*="text-[#a3aca6]"],
+.dark [class*="text-[#a4afa8]"],
+.dark [class*="text-[#a6aea8]"] { color: hsl(var(--muted-foreground)) !important; }
+.dark [class*="text-[#207b54]"],
+.dark [class*="text-[#21794f]"],
+.dark [class*="text-[#237b54]"],
+.dark [class*="text-[#237e56]"],
+.dark [class*="text-[#238257]"],
+.dark [class*="text-[#247f55]"],
+.dark [class*="text-[#268359]"],
+.dark [class*="text-[#27845a]"],
+.dark [class*="text-[#287a53]"],
+.dark [class*="text-[#287b54]"],
+.dark [class*="text-[#2b8b60]"],
+.dark [class*="text-[#2c8c60]"],
+.dark [class*="text-[#2e8e62]"] { color: hsl(var(--primary)) !important; }
+.dark [class*="text-[#5eb783]"],
+.dark [class*="text-[#8dd0a5]"],
+.dark [class*="text-[#9ed0ae]"],
+.dark [class*="text-[#a9d6ba]"],
+.dark [class*="text-[#b9d9c3]"] { color: hsl(var(--primary)) !important; }
+.dark [class*="text-[#24698a]"],
+.dark [class*="text-[#287397]"] { color: hsl(var(--info)) !important; }
+.dark [class*="text-[#8a6300]"],
+.dark [class*="text-[#9b6500]"],
+.dark [class*="text-[#9e6900]"],
+.dark [class*="text-[#a66c00]"],
+.dark [class*="text-[#a96d00]"],
+.dark [class*="text-[#ad730c]"],
+.dark [class*="text-[#bb7d08]"] { color: hsl(var(--warning)) !important; }
+.dark [class*="text-[#a53d39]"],
+.dark [class*="text-[#c54842]"] { color: hsl(var(--destructive)) !important; }
+.dark [class*="text-[#6b4f9a]"] { color: hsl(var(--chart-5)) !important; }
+
+/* Le fond clair du logo est une surface de marque intentionnelle. */
+.dark .brand-logo-surface { background-color: white !important; }

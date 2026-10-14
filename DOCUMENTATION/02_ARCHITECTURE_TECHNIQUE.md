@@ -1,5 +1,15 @@
 # Architecture technique
 
+## Modernisation UX/UI — thèmes et fondations
+
+J'ai centralisé les thèmes dans `components/theme/ThemeProvider.tsx`, basé sur `next-themes` déjà installé. Le fournisseur applique la classe clair ou sombre sur le document, conserve la préférence côté navigateur et suit le système lorsque choisi. `app/layout.tsx` englobe l'application, le sélecteur public et les notifications dans ce fournisseur ; `suppressHydrationWarning` et le montage différé du sélecteur préviennent un désaccord d'hydratation.
+
+Les jetons sémantiques de `app/globals.css` alimentent Tailwind dans les modes clair et sombre. Les coques utilisateur et administrative portent leur sélecteur dans l'en-tête et le menu mobile, tandis que le contrôle public évite les doublons sur les espaces authentifiés. Le frontend reste sans accès Prisma ou PostgreSQL. Voir `10_MODERNISATION_UX_UI.md` et l'intervention 0037.
+
+## Gouvernance plateforme Phase 3.1.1
+
+J'ai conservé la frontière serveur : les écrans d'administration passent exclusivement par les routes `/api/administration`, lesquelles vérifient session, origine, limite locale, permission et validation Zod. Les services portent les transactions sérialisables, l'audit et les protections métier. Le schéma ajoute les rôles personnalisés, la configuration de module, le paramètre global, les litiges, les incidents et l'état administratif distinct d'une tontine ; ils nécessitent la migration préparée avant toute utilisation.
+
 ## Phase 3.1 — Administration globale
 
 J'ai ajouté une frontière serveur distincte pour `/administration-plateforme`. Le layout vérifie la session puis les rôles globaux persistés ; chaque route `/api/administration/*` revérifie session, permission, origine des mutations et limite locale de requêtes. Le frontend n'accède jamais à Prisma.
@@ -61,6 +71,24 @@ Inscription crée transactionnellement `Utilisateur`, `Profil` et `VerificationE
 Migrations appliquées selon résultat manuel communiqué : initiale et `20261010135535_alignement_modele_metier`. Le statut Prisma doit être reconfirmé manuellement avant toute nouvelle évolution.
 
 Phase 2.4 ajoute champs `Cotisation` et `DeclarationCotisation`, dont `Cotisation.tontineId` requis. Migration générée doit impérativement traiter cotisations existantes : renseigner `tontineId` depuis rotation avant contrainte non nulle. Aucune migration n'est créée ou appliquée par cette intervention.
+
+## Thèmes et surfaces — Intervention 0038
+
+Le thème applicatif est porté par `ThemeProvider` et `next-themes` sur l'élément HTML. `app/globals.css` définit les jetons clair/sombre d'arrière-plan, contenu, cartes, popovers, statuts et trois niveaux de surfaces ; `tailwind.config.ts` les expose aux composants. Les portails Radix utilisent `bg-popover`/`text-popover-foreground`, ce qui les rattache au même thème que leur page.
+
+Les composants historiques qui gardent une valeur hexadécimale sont couverts en thème sombre par une compatibilité CSS ciblée, limitée à `.dark`. Cette couche est transitoire et ne remplace pas une migration source vers les jetons. Le défilement horizontal global ne doit pas être masqué : chaque tableau large l'encapsule localement dans `Table`, tandis que les dialogues limitent leur hauteur à la fenêtre.
+
+## Responsive et interactions — Intervention 0039
+
+`AppShell` et `AppShellAdministration` concentrent la navigation responsive : barre latérale à partir de `lg`, en-tête compact avant ce seuil, tiroir mobile à largeur bornée, fermeture par voile, bouton et touche Échap. La navigation utilisateur fixe tient compte de la zone de sécurité inférieure et le contenu garde une marge basse correspondante.
+
+`Table` impose une zone de défilement horizontale locale, tactile et focalisable, avec une largeur minimale lisible. Les dialogues et modales utilisent `100dvh`, un défilement interne et des actions empilées avant `sm`. Les animations de l'interface sont limitées à l'opacité et au transform, et la règle globale `prefers-reduced-motion` les réduit ; aucun comportement métier ne dépend d'une animation.
+
+## Mouvement et retours UI — Intervention 0040
+
+`app/globals.css` porte les durées `--duree-micro-interaction`, `--duree-transition`, `--duree-panneau` et la courbe `--easing-naturel`. Les composants partagés les consomment par classes Tailwind et restent sans bibliothèque d'animation. `surface-interactive` est volontairement opt-in : seules les surfaces qui mènent à une action peuvent se soulever légèrement au survol, sans modifier les montants ou les historiques financiers.
+
+Les primitives Radix conservent leur gestion du focus, des portails et des états ouverts/fermés. Dialogues, panneaux, listes déroulantes, sélecteurs, onglets et toasts ajoutent seulement des entrées/sorties courtes. Les états de chargement, erreur, vide et synchronisation utilisent des rôles de statut ou d'alerte et des apparitions non bloquantes. La règle globale de réduction de mouvement demeure prioritaire : aucun contrôle, état, succès ou erreur ne dépend d'une animation.
 
 ## Conventions
 

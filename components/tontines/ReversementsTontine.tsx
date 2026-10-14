@@ -77,7 +77,7 @@ export function ReversementsTontine({ tontineId }: { tontineId: string }) {
 
   const declarer = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!selectionDeclaration) return;
+    if (!selectionDeclaration || envoi) return;
     setEnvoi(true);
     setErreur("");
     try {
@@ -108,7 +108,7 @@ export function ReversementsTontine({ tontineId }: { tontineId: string }) {
   };
 
   const decider = async (decision: "CONFIRMER" | "CONTESTER") => {
-    if (!selectionDecision) return;
+    if (!selectionDecision || envoi) return;
     setEnvoi(true);
     setErreur("");
     try {
@@ -139,11 +139,11 @@ export function ReversementsTontine({ tontineId }: { tontineId: string }) {
         </div>
         <Button variant="outline" onClick={() => void charger()} className="border-[#c5dcc9] text-[#237e56]"><RefreshCw size={15} /> Actualiser</Button>
       </div>
-      {erreur && <p role="alert" className="rounded-xl bg-[#fdebea] p-3 text-sm text-[#a53d39]">{erreur}</p>}
+      {erreur && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{erreur}</p>}
       {rotations.length === 0 ? (
-        <p className="rounded-2xl border bg-white p-8 text-center text-sm text-muted-foreground">Aucune rotation ne permet encore de suivre un reversement.</p>
+        <p className="rounded-2xl border bg-card p-8 text-center text-sm text-muted-foreground">Aucune rotation ne permet encore de suivre un reversement.</p>
       ) : rotations.map((rotation) => (
-        <article key={rotation.id} className="rounded-2xl border bg-white p-5">
+        <article key={rotation.id} className="rounded-2xl border bg-card p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-semibold text-[#20392d]">Tour {rotation.numero} · {rotation.beneficiaireNom}</p>
@@ -160,7 +160,7 @@ export function ReversementsTontine({ tontineId }: { tontineId: string }) {
           </div>
           <p className="mt-3 text-xs text-muted-foreground">{rotation.attenteConfirmation} en attente de confirmation · {rotation.contestations} contestation(s) · {formaterMontant(nombre(rotation.montantRestantAConfirmer))} à confirmer.</p>
           {rotation.reversements.map((reversement) => (
-            <div key={reversement.id} className="mt-4 rounded-xl bg-[#f8faf6] p-4 text-sm">
+            <div key={reversement.id} className="mt-4 rounded-xl bg-surface-subtle p-4 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold text-[#294237]">{formaterMontant(nombre(reversement.montant))} · {reversement.statut}</span>
                 <span className="text-xs text-muted-foreground">Déclaré le {formaterDateCourte(reversement.verseLe)}</span>
@@ -176,10 +176,10 @@ export function ReversementsTontine({ tontineId }: { tontineId: string }) {
       ))}
 
       <Dialog open={Boolean(selectionDeclaration)} onOpenChange={(ouvert) => { if (!ouvert) fermerDeclaration(); }}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl bg-[#fffefa] sm:max-w-xl">
+        <DialogContent className="rounded-2xl sm:max-w-xl">
           <DialogHeader><DialogTitle>Déclarer un reversement</DialogTitle><DialogDescription>Le transfert est externe. Sa réception reste à confirmer par le bénéficiaire.</DialogDescription></DialogHeader>
           {selectionDeclaration && <form onSubmit={declarer} className="grid gap-3 sm:grid-cols-2">
-            <p className="rounded-xl bg-[#f8faf6] p-3 text-sm sm:col-span-2">Disponible : <b>{formaterMontant(nombre(selectionDeclaration.montantRestantAReverser))}</b>. Les montants suivent les cotisations déjà confirmées.</p>
+            <p className="rounded-xl bg-surface-subtle p-3 text-sm sm:col-span-2">Disponible : <b>{formaterMontant(nombre(selectionDeclaration.montantRestantAReverser))}</b>. Les montants suivent les cotisations déjà confirmées.</p>
             <input required type="number" min="0.01" step="0.01" max={nombre(selectionDeclaration.montantRestantAReverser)} value={formulaireDeclaration.montant} onChange={(event) => setFormulaireDeclaration({ ...formulaireDeclaration, montant: event.target.value })} placeholder="Montant" className="h-11 rounded-xl border px-3" />
             <input required type="date" max={new Date().toISOString().slice(0, 10)} value={formulaireDeclaration.verseLe} onChange={(event) => setFormulaireDeclaration({ ...formulaireDeclaration, verseLe: event.target.value })} className="h-11 rounded-xl border px-3" />
             <input value={formulaireDeclaration.moyenVersement} onChange={(event) => setFormulaireDeclaration({ ...formulaireDeclaration, moyenVersement: event.target.value })} placeholder="Moyen de transfert" className="h-11 rounded-xl border px-3" />
@@ -192,10 +192,10 @@ export function ReversementsTontine({ tontineId }: { tontineId: string }) {
       </Dialog>
 
       <Dialog open={Boolean(selectionDecision)} onOpenChange={(ouvert) => { if (!ouvert) fermerDecision(); }}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl bg-[#fffefa] sm:max-w-xl">
+        <DialogContent className="rounded-2xl sm:max-w-xl">
           <DialogHeader><DialogTitle>Confirmer la réception</DialogTitle><DialogDescription>Confirmez seulement le montant reçu hors de TontiTrack. Une contestation ne vaut jamais confirmation.</DialogDescription></DialogHeader>
           {selectionDecision && <div className="space-y-3">
-            <p className="rounded-xl bg-[#f8faf6] p-3 text-sm">Reversement déclaré : <b>{formaterMontant(nombre(selectionDecision.reversement.montant))}</b>.</p>
+            <p className="rounded-xl bg-surface-subtle p-3 text-sm">Reversement déclaré : <b>{formaterMontant(nombre(selectionDecision.reversement.montant))}</b>.</p>
             <label className="block text-sm">Montant réellement reçu<input required type="number" min="0.01" step="0.01" max={nombre(selectionDecision.reversement.montant)} value={formulaireDecision.montantConfirme} onChange={(event) => setFormulaireDecision({ ...formulaireDecision, montantConfirme: event.target.value })} className="mt-1 h-11 w-full rounded-xl border px-3" /></label>
             <textarea value={formulaireDecision.observation} onChange={(event) => setFormulaireDecision({ ...formulaireDecision, observation: event.target.value })} placeholder="Observation facultative" rows={2} className="w-full rounded-xl border p-3 text-sm" />
             <textarea value={formulaireDecision.motifContestation} onChange={(event) => setFormulaireDecision({ ...formulaireDecision, motifContestation: event.target.value })} placeholder="Motif obligatoire si vous contestez" rows={2} className="w-full rounded-xl border p-3 text-sm" />

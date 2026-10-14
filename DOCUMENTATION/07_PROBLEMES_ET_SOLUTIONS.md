@@ -1,5 +1,35 @@
 # Problèmes et solutions
 
+## Intervention 0040 — Fluidité à confirmer sur navigateur réel
+
+J'ai appliqué les nouvelles conventions de mouvement par lecture statique, sans démarrer l'application ni disposer d'une page de prévisualisation ouverte. Je ne peux donc pas mesurer fluidité, fréquence d'image, comportement tactile ou restitution exacte du focus. Le risque restant concerne un navigateur, un appareil modeste ou un portail Radix donné. Je dois suivre la matrice `tests/ui/intervention-d-animations.test.ts`, avec mouvement réduit, clavier, thèmes et parcours financiers, avant de qualifier ces finitions de validées.
+
+## Intervention 0039 — Responsive non validé par le retour utilisateur
+
+Le retour utilisateur confirme que les changements précédents ne rendaient pas l'interface suffisamment confortable sur petit écran. La cause ne peut pas être isolée visuellement sans navigateur, mais la lecture statique a confirmé des en-têtes trop chargés, tableaux comprimés, actions de modale horizontales, listes à contenu long et absence de gestion explicite des zones de sécurité.
+
+J'ai corrigé ces structures au niveau partagé et métier, sans cacher le débordement global. Le risque résiduel reste élevé tant que le testeur externe n'a pas vérifié les routes réelles à chaque largeur demandée, dans les orientations portrait/paysage et avec clavier mobile. La matrice `tests/ui/intervention-c-responsive.test.ts` fixe cette validation obligatoire.
+
+## Intervention 0038 — Surfaces claires résiduelles en thème sombre
+
+Le changement de thème était actif, mais 367 occurrences de classes de palette fixe restaient dans les composants et pages. Elles pouvaient conserver une carte, un champ ou un panneau clair, en particulier dans les modules Tontine, financier et Super Admin. La préférence sombre des Paramètres était aussi isolée dans un état local et n'appliquait pas le thème global.
+
+J'ai converti les parcours prioritaires vers les jetons et ajouté une compatibilité explicite, limitée à `.dark`, pour les couleurs historiques restantes. Je n'ai pas appliqué de filtre global. La bascule Paramètres utilise maintenant le fournisseur de thème partagé. Le risque restant est un cas visuel non couvert par lecture statique ; je dois le rechercher manuellement dans les trois thèmes et à toutes les largeurs prévues avant validation.
+
+## Intervention 0037 — Couleurs rigides et vérification visuelle à compléter
+
+J'ai constaté que les coques principales et plusieurs composants partagés employaient des couleurs littérales adaptées seulement au thème clair. Je les ai raccordés aux jetons sémantiques et j'ai ajouté le thème sombre global. Des couleurs littérales restent dans des écrans métier détaillés : ce n'est pas un contournement, mais une migration progressive à vérifier composant par composant pendant l'intervention B.
+
+Le démarrage de serveur étant interdit pendant cette intervention, je n'ai pas de capture ni de mesure navigateur. Je dois contrôler manuellement contraste, absence de flash, focus, lecteur d'écran, modales et largeurs mobiles avant de considérer le rendu validé.
+
+## Intervention 0036 — Page Rôles en erreur
+
+J'ai établi que `GET /api/administration/roles` renvoyait la promesse de `administrationService.roles()` sans l'attendre. Le client recevait donc un contrat incomplet et appelait `map` sur une valeur absente. J'ai attendu le service et ajouté une validation défensive de l'enveloppe et des tableaux côté interface. Si une régression renvoie encore un contrat incorrect, l'écran affiche désormais une erreur récupérable au lieu de planter.
+
+## Intervention 0035 — Gouvernance administrative limitée
+
+J'ai constaté que l'administration Phase 3.1 disposait uniquement de rôles système, d'une lecture de module statique, de paramètres volontairement vides et d'aucun modèle de litige, incident ou suspension administrative de tontine. J'ai ajouté un socle persistant et contrôlé sans contourner les règles financières. Le risque restant est l'absence de validation technique et d'application de migration : aucune fonctionnalité dépendante du nouveau Prisma Client ne doit être considérée opérationnelle avant les commandes manuelles et les parcours de test.
+
 ## Intervention 0034 — Destination de connexion indépendante des rôles
 
 La page de connexion validait uniquement un retour client avec `/tableau-de-bord` comme défaut. Elle ne recevait ni rôle ni permission, même si la session relisait correctement les rôles depuis PostgreSQL. Ce décalage envoyait un Super Admin vers l'espace utilisateur après connexion. J'ai déplacé la décision vers la route serveur, où les rôles sont lus depuis la source persistée et où les permissions déterminent la destination autorisée. Les layouts restent l'autorité finale.

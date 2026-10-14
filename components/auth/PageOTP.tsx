@@ -65,20 +65,20 @@ export function PageOTP() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f8f7f2] px-4 py-10">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center"><Logo /></div>
-        <div className="rounded-2xl border bg-white p-6 text-center shadow-sm sm:p-8">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#e8f5ef] text-[#237e56]">
+        <div className="rounded-2xl border bg-card p-6 text-center shadow-sm sm:p-8">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-primary/10 text-primary">
             <RefreshCw size={26} />
           </div>
-          <h1 className="mt-5 text-xl font-semibold text-[#20392d]">Vérification du téléphone</h1>
+          <h1 className="mt-5 text-xl font-semibold text-foreground">Vérification du téléphone</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Nous avons envoyé un code à 6 chiffres au numéro que vous avez fourni.
           </p>
 
           {erreur && (
-            <div className="mt-4 rounded-xl bg-[#fdebea] px-4 py-3 text-sm text-[#a53d39]">{erreur}</div>
+            <div className="mt-4 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{erreur}</div>
           )}
 
           <form onSubmit={handleVerifier} className="mt-6">
@@ -93,11 +93,11 @@ export function PageOTP() {
                   value={digit}
                   onChange={(e) => handleInput(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="h-14 w-12 rounded-xl border-2 bg-white text-center text-xl font-semibold outline-none ring-[#9ed0ae] focus:border-[#237e56] focus:ring-2 sm:h-16 sm:w-14"
+                  className="h-14 w-12 rounded-xl border-2 bg-card text-center text-xl font-semibold outline-none focus:border-primary focus:ring-2 focus:ring-ring sm:h-16 sm:w-14"
                 />
               ))}
             </div>
-            <Button type="submit" disabled={chargement || code.join("").length !== 6} className="mt-6 h-12 w-full bg-[#237e56] hover:bg-[#1c6847]">
+            <Button type="submit" disabled={chargement || code.join("").length !== 6} className="mt-6 h-12 w-full">
               {chargement ? "Vérification..." : "Vérifier"}
               {!chargement && <ArrowRight size={18} className="ml-1" />}
             </Button>
@@ -106,17 +106,17 @@ export function PageOTP() {
           <div className="mt-6">
             {renvoyerDisabled ? (
               <p className="text-sm text-muted-foreground">
-                Renvoyer le code dans <span className="font-semibold text-[#405247]">{compteur}s</span>
+                Renvoyer le code dans <span className="font-semibold text-foreground">{compteur}s</span>
               </p>
             ) : (
-              <button onClick={handleRenvoyer} className="text-sm font-semibold text-[#237e56] hover:underline">
+              <button onClick={handleRenvoyer} className="text-sm font-semibold text-primary hover:underline">
                 Renvoyer le code
               </button>
             )}
           </div>
         </div>
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          <button onClick={() => router.push("/")} className="font-semibold text-[#237e56] hover:underline">
+          <button onClick={() => router.push("/")} className="font-semibold text-primary hover:underline">
             Retour à la connexion
           </button>
         </p>

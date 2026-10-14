@@ -1,5 +1,9 @@
 # Règles métier Tontine
 
+## Suspension administrative
+
+Je distingue la suspension administrative de l'état financier d'une tontine. Une suspension motivée bloque démarrage, adhésion, cotisation et reversement sans modifier les montants, rotations, confirmations, pénalités ou historiques. Elle ne clôture pas la tontine et ne règle aucun litige ; seule une réactivation administrative tracée permet la reprise des opérations compatibles.
+
 ## Décisions validées par propriétaire
 
 - Tout utilisateur inscrit peut créer tontine ; créateur administre ses propres tontines.

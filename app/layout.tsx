@@ -1,6 +1,9 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { AppProvider } from '@/contexts/AppContext';
+import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import { SelecteurThemePublic } from '@/components/theme/SelecteurThemePublic';
+import { Toaster } from '@/components/ui/sonner';
 
 export const metadata: Metadata = {
   title: 'TontiTrack — Vos finances, en confiance',
@@ -10,9 +13,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body>
-        <AppProvider>{children}</AppProvider>
+        <ThemeProvider>
+          <AppProvider>{children}</AppProvider>
+          <SelecteurThemePublic />
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

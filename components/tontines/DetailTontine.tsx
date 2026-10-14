@@ -100,16 +100,16 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
 
   return (
     <div className="space-y-6">
-      <button onClick={onRetour} className="flex items-center gap-2 text-sm text-[#728078] hover:text-[#237e56]">
+      <button onClick={onRetour} className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-primary">
         <ArrowLeft size={16} /> Retour aux tontines
       </button>
 
       {/* En-tête tontine */}
-      <div className="rounded-2xl border bg-white p-5 sm:p-7">
+      <div className="rounded-2xl border bg-card p-5 sm:p-7">
         <div className="flex flex-col justify-between gap-4 sm:flex-row">
           <div>
-            <div className="flex items-center gap-3">
-              <h3 className="text-xl font-semibold text-[#20392d]">{tontine.nom}</h3>
+            <div className="flex flex-wrap items-center gap-3">
+              <h3 className="min-w-0 break-words text-xl font-semibold text-foreground">{tontine.nom}</h3>
               <BadgeStatut tone={toneStatutTontine(tontine.statut)}>
                 {libelleStatutTontine(tontine.statut)}
               </BadgeStatut>
@@ -122,16 +122,16 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
           </div>
           {estCreateur && (
             <div className="relative">
-              <button onClick={() => setShowActions(!showActions)} className="rounded-lg p-2 text-[#718078] hover:bg-[#f3f5f0]">
+              <button aria-label="Actions de la tontine" onClick={() => setShowActions(!showActions)} className="grid h-11 w-11 place-items-center rounded-lg text-muted-foreground hover:bg-muted">
                 <MoreHorizontal size={19} />
               </button>
               {showActions && (
-                <div className="absolute right-0 top-10 z-10 w-48 rounded-xl border bg-white py-2 shadow-lg">
-                  <button onClick={() => { setOnglet("invitations"); onChangerOnglet?.("invitations"); setShowActions(false); }} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-[#405247] hover:bg-[#f8faf6]">
+                <div role="menu" className="absolute right-0 top-10 z-10 w-52 rounded-xl border bg-popover py-2 text-popover-foreground shadow-lg">
+                  <button onClick={() => { setOnglet("invitations"); onChangerOnglet?.("invitations"); setShowActions(false); }} className="flex min-h-10 w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted">
                     <Copy size={15} /> Inviter des membres
                   </button>
                   {tontine.statut === "EN_PREPARATION" && (
-                    <button onClick={() => { setShowAnnuler(true); setShowActions(false); }} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-[#a53d39] hover:bg-[#fdebea]">
+                    <button onClick={() => { setShowAnnuler(true); setShowActions(false); }} className="flex min-h-10 w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10">
                       <Ban size={15} /> Annuler la tontine
                     </button>
                   )}
@@ -143,19 +143,19 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
 
         {/* Stats rapides */}
         <div className="mt-7 grid gap-3 sm:grid-cols-4">
-          <div className="rounded-xl bg-[#f8faf6] p-4">
+          <div className="rounded-xl bg-surface-subtle p-4">
             <p className="text-xs text-muted-foreground">Membres</p>
             <p className="mt-2 font-semibold text-[#294237]">{tontine.nombreMembresApprouves} / {tontine.nombreParticipantsRequis}</p>
           </div>
-          <div className="rounded-xl bg-[#f8faf6] p-4">
+          <div className="rounded-xl bg-surface-subtle p-4">
             <p className="text-xs text-muted-foreground">Nombre de tours</p>
             <p className="mt-2 font-semibold text-[#294237]">{nombreTours}</p>
           </div>
-          <div className="rounded-xl bg-[#f8faf6] p-4">
+          <div className="rounded-xl bg-surface-subtle p-4">
             <p className="text-xs text-muted-foreground">Fréquence</p>
             <p className="mt-2 font-semibold text-[#294237]">{tontine.frequence}</p>
           </div>
-          <div className="rounded-xl bg-[#f8faf6] p-4">
+          <div className="rounded-xl bg-surface-subtle p-4">
             <p className="text-xs text-muted-foreground">Fuseau horaire</p>
             <p className="mt-2 font-semibold text-[#294237]">{tontine.fuseauHoraire}</p>
           </div>
@@ -163,13 +163,13 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
       </div>
 
       {/* Onglets */}
-      <div className="flex gap-1 overflow-x-auto border-b scrollbar-hide">
+      <div aria-label="Onglets de la tontine" className="flex gap-1 overflow-x-auto overscroll-x-contain border-b scrollbar-hide [-webkit-overflow-scrolling:touch]">
         {onglets.map((o) => (
           <button
             key={o.id}
             onClick={() => { setOnglet(o.id); onChangerOnglet?.(o.id); }}
-            className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition ${
-              onglet === o.id ? "border-[#2b8b60] text-[#237e56]" : "border-transparent text-muted-foreground hover:text-[#405247]"
+            className={`min-h-11 shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition ${
+              onglet === o.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {o.label}
@@ -183,7 +183,7 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
           {estCreateur && (tontine.statut === "EN_PREPARATION" || tontine.statut === "PRETE_A_DEMARRER" || tontine.statut === "ACTIVE") && <DemarrageTontine tontine={tontine} onActualiser={actualiserTontine} />}
           {tontine.statut === "ACTIVE" && <ApercuCotisationsTontine tontineId={tontine.id} estCreateur={estCreateur} prochainTour={prochainTour} allerCotisations={() => { setOnglet("cotisations"); onChangerOnglet?.("cotisations"); }} allerMembres={() => { setOnglet("membres"); onChangerOnglet?.("membres"); }} allerRotations={() => { setOnglet("rotations"); onChangerOnglet?.("rotations"); }} />}
           {rotationEnCours && (
-            <div className="rounded-2xl border bg-white p-5">
+            <div className="rounded-2xl border bg-card p-5">
               <h4 className="font-semibold text-[#20392d]">Rotation en cours — Tour {rotationEnCours.numero}</h4>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl bg-[#f8faf6] p-4">
@@ -202,13 +202,13 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
 
           {/* Votre action */}
           {estCreateur && tontine.statut === "ACTIVE" && (
-            <div className="rounded-2xl border border-[#d4eadb] bg-[#f1f9f2] p-5">
-              <h4 className="flex items-center gap-2 font-semibold text-[#28583c]">
+            <div className="rounded-2xl border border-primary/20 bg-primary/10 p-5">
+              <h4 className="flex items-center gap-2 font-semibold text-foreground">
                 <AlertCircle size={18} /> Actions en attente
               </h4>
               <div className="mt-4 space-y-3">
                 {tontine.cotisations.filter((c) => c.statut === "PARTIEL" || c.statut === "EN_RETARD").map((cot) => (
-                  <div key={cot.id} className="flex items-center gap-3 rounded-xl bg-white p-3">
+                  <div key={cot.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-3">
                     <span className={`grid h-8 w-8 place-items-center rounded-full ${cot.statut === "EN_RETARD" ? "bg-[#fdebea] text-[#a53d39]" : "bg-[#fff3d8] text-[#9b6500]"}`}>
                       <Clock size={15} />
                     </span>
@@ -227,7 +227,7 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
 
           {/* Ma cotisation (membre) */}
           {!estCreateur && tontine.statut === "ACTIVE" && rotationEnCours && (
-            <div className="rounded-2xl border bg-white p-5">
+            <div className="rounded-2xl border bg-card p-5">
               <h4 className="font-semibold text-[#20392d]">Votre cotisation</h4>
               {(() => {
                 const maCot = tontine.cotisations.find((c) => c.membreId === "m1");
@@ -247,7 +247,7 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
                       {formaterMontant(maCot.montantValide)} / {formaterMontant(maCot.montantAttendu)}
                     </p>
                     {reste > 0 && maCot.statut !== "NON_CONCERNE" && (
-                      <Button onClick={() => setShowDeclaration(maCot.id)} className="mt-4 w-full bg-[#237e56] hover:bg-[#1c6847]">
+                      <Button onClick={() => setShowDeclaration(maCot.id)} className="mt-4 w-full">
                         <CreditCard size={16} /> Déclarer un paiement ({formaterMontant(reste)})
                       </Button>
                     )}
@@ -259,7 +259,7 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
 
           {/* Invitations */}
           {estCreateur && (tontine.statut === "EN_PREPARATION" || tontine.statut === "PRETE_A_DEMARRER") && (
-            <div className="rounded-2xl border bg-white p-5">
+            <div className="rounded-2xl border bg-card p-5">
               <h4 className="font-semibold text-[#20392d]">Invitation</h4>
               <p className="mt-1 text-sm text-muted-foreground">Créez une invitation ciblée ou un lien sécurisé.</p>
               <Button onClick={() => { setOnglet("invitations"); onChangerOnglet?.("invitations"); }} variant="outline" className="mt-3 w-full border-[#c5dcc9] text-[#237e56]">
@@ -271,7 +271,7 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
       )}
 
       {onglet === "invitations" && (
-        <div className="rounded-2xl border bg-white p-5">
+        <div className="rounded-2xl border bg-card p-5">
           <h4 className="font-semibold text-[#20392d]">Invitations</h4>
           <p className="mt-1 text-sm text-muted-foreground">Les invitations et leurs statuts proviennent de votre espace sécurisé.</p>
           <div className="mt-4"><GestionInvitations tontineId={tontine.id} estCreateur={estCreateur} /></div>
@@ -283,7 +283,7 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
         <div className="space-y-4">
           {(estCreateur || tontine.membres.length > 0) && <OrdreBeneficiaires tontine={tontine} estCreateur={estCreateur} onActualiser={actualiserTontine} />}
           {tontine.rotations.length === 0 ? (
-            <div className="rounded-2xl border bg-white p-8 text-center">
+            <div className="rounded-2xl border bg-card p-8 text-center">
               <CalendarDays size={32} className="mx-auto text-[#9bc8aa]" />
               <p className="mt-3 text-sm font-medium text-[#405247]">Aucune rotation pour le moment.</p>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -293,7 +293,7 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
           ) : (
             <div className="space-y-3">
               {tontine.rotations.map((rotation) => (
-                <div key={rotation.id} className="rounded-2xl border bg-white p-5">
+                <div key={rotation.id} className="rounded-2xl border bg-card p-5">
                   <div className="flex items-start gap-4">
                     <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-sm font-bold ${
                       rotation.statut === "TERMINEE" ? "bg-[#e8f5ef] text-[#237b54]" :
@@ -351,13 +351,13 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
       {onglet === "historique" && (
         <div className="space-y-3">
           {tontine.declarations.length === 0 ? (
-            <div className="rounded-2xl border bg-white p-8 text-center">
+            <div className="rounded-2xl border bg-card p-8 text-center">
               <FileText size={32} className="mx-auto text-[#9bc8aa]" />
               <p className="mt-3 text-sm font-medium text-[#405247]">Aucun historique de déclaration.</p>
             </div>
           ) : (
             tontine.declarations.map((decl) => (
-              <div key={decl.id} className="rounded-xl border bg-white p-4">
+              <div key={decl.id} className="rounded-xl border bg-card p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className={`grid h-9 w-9 place-items-center rounded-full ${decl.statut === "VALIDEE" ? "bg-[#e8f5ef] text-[#237b54]" : decl.statut === "REJETEE" ? "bg-[#fdebea] text-[#a53d39]" : "bg-[#fff3d8] text-[#9b6500]"}`}>
@@ -412,8 +412,8 @@ export function DetailTontine({ tontine, onRetour, onMutation, onActualiser, ong
         />
       )}
       {toast && (
-        <div className="fixed bottom-24 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#20392d] px-4 py-3 text-sm font-medium text-white shadow-xl lg:bottom-8">
-          <Check size={16} className="text-[#8dd0a5]" /> {toast}
+        <div role="status" className="notification-flottante fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-popover px-4 py-3 text-center text-sm font-medium text-popover-foreground shadow-xl lg:bottom-8">
+          <Check size={16} className="text-primary" /> {toast}
         </div>
       )}
     </div>

@@ -1,0 +1,8 @@
+import { NextResponse } from "next/server";
+import { StatutLitigeAdministration } from "@prisma/client";
+import { z } from "zod";
+import { autoriserAdministration, entierParametre, erreurAdministration } from "@/app/api/administration/outils";
+import { administrationService } from "@/services/administration.service";
+const schema = z.object({ tontineId: z.string().trim().min(1).optional(), type: z.string().trim().min(3).max(80), titre: z.string().trim().min(3).max(160), description: z.string().trim().max(2_000).optional(), operationType: z.string().trim().max(80).optional(), operationId: z.string().trim().max(120).optional() });
+export async function GET(requete: Request) { try { await autoriserAdministration("tontines.litiges.lire"); const url = new URL(requete.url); const statut = url.searchParams.get("statut"); return NextResponse.json({ donnees: await administrationService.listerLitiges({ page: entierParametre(url.searchParams.get("page"), 1), taille: entierParametre(url.searchParams.get("taille"), 20), tontineId: url.searchParams.get("tontineId") ?? undefined, statut: statut && Object.values(StatutLitigeAdministration).includes(statut as StatutLitigeAdministration) ? statut as StatutLitigeAdministration : undefined }) }); } catch (cause) { return erreurAdministration(cause); } }
+export async function POST(requete: Request) { try { const contexte = await autoriserAdministration("tontines.litiges.gerer", requete); return NextResponse.json({ donnees: await administrationService.creerLitige(schema.parse(await requete.json()), contexte.utilisateur.id) }, { status: 201 }); } catch (cause) { return erreurAdministration(cause); } }

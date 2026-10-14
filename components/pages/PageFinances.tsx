@@ -53,19 +53,19 @@ export function PageFinances() {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="text-sm text-muted-foreground">Espace {espaces.find((e) => e.id === espaceActifId)?.nom}</p>
-          <h2 className="mt-1 text-xl font-semibold text-[#20392d]">Toutes vos opérations</h2>
+          <h2 className="mt-1 text-xl font-semibold text-foreground">Toutes vos opérations</h2>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full gap-2 sm:w-auto">
           <select
             value={espaceActifId}
             onChange={(e) => changerEspace(e.target.value)}
-            className="rounded-xl border bg-white px-3 py-2 text-sm text-[#53625a]"
+            className="min-w-0 flex-1 rounded-xl border bg-card px-3 py-2 text-sm text-foreground sm:flex-none"
           >
             {espaces.map((e) => (
               <option key={e.id} value={e.id}>{e.nom}</option>
             ))}
           </select>
-          <Button onClick={() => setShowTransaction(true)} className="bg-[#237e56] hover:bg-[#1c6847]">
+          <Button onClick={() => setShowTransaction(true)} className="shrink-0">
             <Plus size={17} /> <span className="hidden sm:inline">Nouvelle opération</span>
           </Button>
         </div>
@@ -73,30 +73,30 @@ export function PageFinances() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border bg-white p-5">
+        <div className="rounded-2xl border bg-card p-5">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#e8f5ef] text-[#237b54]"><WalletCards size={18} /></span>
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary"><WalletCards size={18} /></span>
             <div>
               <p className="text-xs text-muted-foreground">Solde disponible</p>
-              <p className="text-lg font-semibold text-[#20392d]">{formaterMontant(solde)}</p>
+              <p className="text-lg font-semibold text-foreground">{formaterMontant(solde)}</p>
             </div>
           </div>
         </div>
-        <div className="rounded-2xl border bg-white p-5">
+        <div className="rounded-2xl border bg-card p-5">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#e8f2f8] text-[#24698a]"><ArrowDownLeft size={18} /></span>
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-info/10 text-info"><ArrowDownLeft size={18} /></span>
             <div>
               <p className="text-xs text-muted-foreground">Revenus du mois</p>
-              <p className="text-lg font-semibold text-[#20392d]">{formaterMontant(revenus)}</p>
+              <p className="text-lg font-semibold text-foreground">{formaterMontant(revenus)}</p>
             </div>
           </div>
         </div>
-        <div className="rounded-2xl border bg-white p-5">
+        <div className="rounded-2xl border bg-card p-5">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#fff3d8] text-[#9b6500]"><ArrowUpRight size={18} /></span>
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-warning/15 text-warning"><ArrowUpRight size={18} /></span>
             <div>
               <p className="text-xs text-muted-foreground">Dépenses du mois</p>
-              <p className="text-lg font-semibold text-[#20392d]">{formaterMontant(depenses)}</p>
+              <p className="text-lg font-semibold text-foreground">{formaterMontant(depenses)}</p>
             </div>
           </div>
         </div>
@@ -110,7 +110,7 @@ export function PageFinances() {
             key={t}
             onClick={() => setFiltreType(t)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-              filtreType === t ? "bg-[#237e56] text-white" : "bg-white text-[#728078] hover:bg-[#f0f3ed]"
+              filtreType === t ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-muted"
             }`}
           >
             {t === "TOUS" ? "Tous" : libelleTypeTransaction(t)}
@@ -119,7 +119,7 @@ export function PageFinances() {
         <select
           value={filtreCategorie}
           onChange={(e) => setFiltreCategorie(e.target.value)}
-          className="rounded-lg border bg-white px-3 py-1.5 text-xs text-[#53625a]"
+          className="rounded-lg border bg-card px-3 py-1.5 text-xs text-foreground"
         >
           <option value="TOUS">Toutes catégories</option>
           {categories.filter((c) => !c.estArchive).map((c) => (
@@ -132,27 +132,27 @@ export function PageFinances() {
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
             placeholder="Rechercher..."
-            className="h-9 w-full rounded-lg border bg-white pl-9 pr-3 text-sm outline-none ring-[#9ed0ae] focus:ring-2"
+            className="h-10 w-full rounded-lg border bg-card pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
       </div>
 
       {/* Historique */}
-      <div className="rounded-2xl border bg-white p-5">
+      <div className="rounded-2xl border bg-card p-5">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-[#20392d]">Historique</h3>
+            <h3 className="font-semibold text-foreground">Historique</h3>
             <p className="mt-1 text-xs text-muted-foreground">{txFiltrees.length} opération(s)</p>
           </div>
         </div>
 
         {txFiltrees.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-sm font-medium text-[#405247]">Aucune opération trouvée.</p>
+            <p className="text-sm font-medium text-foreground">Aucune opération trouvée.</p>
             <p className="mt-1 text-xs text-muted-foreground">Modifiez vos filtres ou ajoutez une opération.</p>
           </div>
         ) : (
-          <div className="mt-4 divide-y divide-[#f0efea]">
+          <div className="mt-4 divide-y divide-border">
             {txFiltrees.map((tx) => (
               <div key={tx.id} className="flex items-center gap-3 py-3.5">
                 <span className={`grid h-10 w-10 place-items-center rounded-xl ${
@@ -193,12 +193,12 @@ export function PageFinances() {
       </div>
 
       {/* Conseil */}
-      <div className="rounded-2xl border border-[#c5dcc9] bg-[#f1f8f2] p-5">
+      <div className="rounded-2xl border border-primary/20 bg-primary/10 p-5">
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-[#268359]"><Sparkles size={16} /></span>
-          <h3 className="font-semibold text-[#28583c]">Conseil du mois</h3>
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-card text-primary"><Sparkles size={16} /></span>
+          <h3 className="font-semibold text-foreground">Conseil du mois</h3>
         </div>
-        <p className="mt-4 text-sm leading-6 text-[#537362]">
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">
           Vous êtes à <b>16,7%</b> d’épargne. Mettre de côté 50 000 XOF de plus vous rapprocherait de votre objectif de 20%.
         </p>
       </div>
@@ -215,8 +215,8 @@ export function PageFinances() {
         />
       )}
       {toast && (
-        <div className="fixed bottom-24 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#20392d] px-4 py-3 text-sm font-medium text-white shadow-xl lg:bottom-8">
-          <Check size={16} className="text-[#8dd0a5]" /> {toast}
+        <div role="status" className="notification-flottante fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-popover px-4 py-3 text-center text-sm font-medium text-popover-foreground shadow-xl lg:bottom-8">
+          <Check size={16} className="text-primary" /> {toast}
         </div>
       )}
     </div>
